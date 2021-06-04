@@ -1,0 +1,178 @@
+---
+title: "Sampling from logistic model"
+author: "John Paterson"
+date: "26/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+```
+
+## The model
+
+In order to sample population emergence from a logistic regression I am treating the logistic regression as a cumulative distribution function, such that 0 equals 0% of population emerged and 1 equals 100% of population emerged. To model a cumulative distribution function I've used the following equation:
+$$f(t) = \frac{\text{asymptote}}{1 + \exp{((\text{mid}~-~t)~*~\text{scale})}}$$
+
+
+For our purposes the asymptote will (presumably?) always be equal to 1 so that leaves parameters of scale and mid (midpoint) that are free to vary. T will be the x-axis variable, so in our case timestep. A model output may look as follows:
+
+
+
+```{r logistic-curve, fig.cap = "Cumulative distribution function for population emergence"}
+
+library(tidyverse)
+theme_set(theme_minimal())
+colors <- list(
+  data = "paleturquoise3",
+  fit = "#414145")
+
+xs <- seq(0, 50, length.out = 50)
+
+# Set equation parameters
+trend <- tibble(
+  timestep = xs,
+  asymptote = 1,
+  scale = .5,
+  midpoint = 25,
+  prop = asymptote / (1 + exp((midpoint - timestep) * scale)))
+
+ggplot() + 
+  geom_line(data = trend, aes(x=timestep, y=prop),color = colors$fit) +
+  scale_x_continuous(
+    name = "Timestep", 
+    limits = c(0, 50)) + 
+  scale_y_continuous(
+    name = "Proportion completion",
+    limits = c(0, 1))
+```
+
+## Random sampling
+
+In order to sample from this function we will need to invert the formula so that random generation of numbers between 0 and 1 (currently the output of the equation) can be used to calculate timesteps (currently t in the equation). This will then allow us to randomly sample from the cumulative distribution function to generate timesteps for individual emergence which we can append to individuals being added to the model in each timestep. 
+
+There may be a function to do this in R but, if so, I didn't find it so instead I've just manually written a function which inverts the cumulative distribution function to solve for t as follows:
+
+$$t = \text{mid}~-~\frac{\log{(\frac{\text{asymptote}}{\text{x}}~-~1)}}{\text{scale}}$$
+
+Where x is equal to the randomly generated numbers between 0:1. I reformed the equation myself so, while it seems to be working and Theo has checked it over, please do double-check my maths! 
+
+So using this equation we can define the asymptote, scale and midpoint parameters of the cumulative distribution function for any species and pull a random sample of 500 timesteps from that distribution as follows (here I have just set asymptote to 1 for the function rather than allowing it to vary):
+
+```{r sample}
+
+## Timestep calculation function 
+
+emergence <- function(midpoint,scale,x){
+  timestep<- midpoint - (log((1/x)-1)/scale)
+    return(timestep)
+}
+
+
+## Generate data
+
+sample <- tibble(
+  x = runif(500, 0, 1),
+  scale = .5,
+  midpoint = 25,
+  timestep = emergence(midpoint, scale, x))
+
+## Plot sample against trend
+
+ggplot()+
+  geom_line(data=trend, aes(x=timestep, y=prop), color=colors$fit)+
+  geom_histogram(data=sample, aes(x=timestep,y = stat(ncount)), alpha=0.6, fill=colors$data)+
+  scale_x_continuous(
+    name = "Timestep", 
+    limits = c(0, 50)) + 
+  scale_y_continuous(
+    name = "Proportion completion",
+    limits = c(0, 1))
+
+
+```
+
+## Varying parameters 
+
+The midpoint of the logistic regression defines the point at which the rate of increase will be highest before a decline; in terms of an abundance distribution it will define the peak of the distribution. By varying the midpoint while holding the scale and asymptote constant the entire event is effectively shifted by the amount by which the midpoint has shifted. In phenology terms, decreasing or increasing the midpoint of the regression is equivalent to advancing or delaying phenology while retaining the shape of the distribution. 
+
+Here we can see this demonstrated by sampling from two different logistic equations, one with a midpoint of 25 and one with a midpoint of 40. Scale is constant across both of them at 0.5 and asymptote is 1. Aside from some variance caused by random samples for each model the effect is essentially a shift of the entire distribution from the midpoint of 25 to the midpoint of 40:
+
+
+```{r midpoint}
+
+## Generate trend data
+
+mid.trend<-tibble(
+  timestep = rep(c(1:60), times=2),
+  asymptote = 1,
+  scale = .5,
+  midpoint = rep(c(25,40), times=60),
+  completion = asymptote / (1 + exp((midpoint - timestep) * scale)))
+
+
+## Generate sample data
+
+mid.sample <- tibble(
+  x = runif(1000, 0, 1),
+  scale = .5,
+  midpoint = rep(c(25,40), times=500),
+  timestep = emergence(midpoint, scale, x))
+mid.sample$midpoint<-as.factor(mid.sample$midpoint)
+
+## Plot sample against trend
+
+ggplot()+
+  geom_line(data=mid.trend, aes(x=timestep, y=completion), color=colors$fit)+
+  geom_histogram(data=mid.sample, aes(x=timestep,y = stat(ncount)), alpha=0.6, fill=colors$data)+
+  scale_x_continuous(
+    name = "Timestep", 
+    limits = c(0, 60)) + 
+  scale_y_continuous(
+    name = "Proportion completion",
+    limits = c(0, 1))+
+  facet_grid(rows=vars(midpoint))
+
+
+```
+
+The scale parameter defines the overall rate of increase of the event. In terms of the distribution, decreasing the scale parameter while holding other parameters constant will flatten and widen the distribution. In terms of phenology this will increase the duration of the event while (as a general rule) decreasing the abundance of a population at any given point along the distribution. 
+
+Here we can see this demonstrated by sampling from two different logistic equations, one with a scale of 0.3 and one with a midpoint of 0.6. Midpoint is constant across both of them at 30 and asymptote is 1. The result of the increase is a narrowing of the distribution and a retraction of the start/end dates:
+
+```{r scale}
+
+## Generate trend data
+
+mid.trend<-tibble(
+  timestep = rep(c(1:60), times=2),
+  asymptote = 1,
+  scale = rep(c(0.3,0.6),times=60),
+  midpoint = 30,
+  completion = asymptote / (1 + exp((midpoint - timestep) * scale)))
+
+
+## Generate sample data
+
+mid.sample <- tibble(
+  x = runif(1000, 0, 1),
+  scale = rep(c(0.3,0.6),times=500),
+  midpoint = 30,
+  timestep = emergence(midpoint, scale, x))
+mid.sample$midpoint<-as.factor(mid.sample$midpoint)
+
+## Plot sample against trend
+
+ggplot()+
+  geom_line(data=mid.trend, aes(x=timestep, y=completion), color=colors$fit)+
+  geom_histogram(data=mid.sample, aes(x=timestep,y = stat(ncount)), alpha=0.6, fill=colors$data)+
+  scale_x_continuous(
+    name = "Timestep", 
+    limits = c(0, 60)) + 
+  scale_y_continuous(
+    name = "Proportion completion",
+    limits = c(0, 1))+
+  facet_grid(rows=vars(scale))
+
+
+```
