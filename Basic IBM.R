@@ -2,6 +2,9 @@
 # Set up info for pollinators ####
 
 # Species info
+
+
+
 # Basic array
 poll_species<-array(data=0, dim=c(2,5));
 colnames(poll_species)<-c("species","interactions","midpoint","scale","efficacy") 
@@ -149,6 +152,10 @@ movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 50, ymax = 5
   
 
 
+# Pollinator interaction ####
+
+# Plant interaction #### 
+# 
 # Run model ####
 timestep<- 23;
 time_steps<- 24;
