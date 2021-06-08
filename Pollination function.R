@@ -18,7 +18,7 @@ pollination <- function(plant, poll, x_loc = 6, y_loc = 7, efficacy = 12, pollin
         species <- poll[i, species]; # Extract the species number of pollinator(s) 
         efficacy<-poll[i, efficacy] # Exract pollinator efficacy for pollinators
         if(plant[p, (ncol+species)] == 1){ # Check that this pollinator species is one which pollinator interacts with 
-          plant[p, pollination] <- plant[p, pollination] + efficacy # If poll can interact with flower, hunger level remains the same
+          plant[p, pollination] <- plant[p, pollination] + efficacy # If flower can interact with pollinator add pollinator's efficacy to pollination column 
         } else {
           plant[p, pollination] <- plant[p, pollination]  # If poll can't interact with flower then pollination remains same
         }}}else {
