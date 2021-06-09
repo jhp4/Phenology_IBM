@@ -11,7 +11,7 @@ pollination <- function(plant, poll, x_loc = 6, y_loc = 7, efficacy = 12, pollin
     xloc   <- plant[p, x_loc]; # Get plant locations
     yloc   <- plant[p, y_loc];
     polls <- sum( poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Total of pollinators at that location
-    if(plant[p, active] == 1){ # Check flower is active
+    if(plant[p, active] == 1 | plant[p, active] == 2){ # Check flower is active
       if(polls > 0){ # Check there are pollinators at that location 
         pollinds <- which(poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Get the pollinator individual(s) at that location 
         for(i in pollinds){
