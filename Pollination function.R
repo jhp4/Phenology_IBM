@@ -15,8 +15,10 @@ pollination <- function(plant, poll, x_loc = 6, y_loc = 7, efficacy = 12, pollin
       if(polls > 0){ # Check there are pollinators at that location 
         pollinds <- which(poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Get the pollinator individual(s) at that location 
         for(i in pollinds){
-        if(plant[p, (ncol+poll[i, species])] == 1){ # Check that this pollinator species is one which pollinator interacts with 
-          plant[p, pollination] <- plant[p, pollination] + poll[i, efficacy] # If flower can interact with pollinator add pollinator's efficacy to pollination column 
+          eff <- poll[i, efficacy]; # Pull efficacy values for those pollinators
+          sp <- poll[i, species]; # Pull species numbers for those pollinators 
+        if(plant[p, (ncol+sp)] == 1){ # Check that this pollinator species is one which pollinator interacts with 
+          plant[p, pollination] <- plant[p, pollination] + eff # If flower can interact with pollinator add pollinator's efficacy to pollination column 
         } }}else {
           plant[p, pollination] <- plant[p, pollination]  # If pollinator not at location then pollination remains same
         }
