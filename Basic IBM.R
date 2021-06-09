@@ -180,7 +180,7 @@ activation<- function(inds, active = 2, emergence = 8){
 
 # Need to figure out how to code this so for plants it checks which locations are already filled as 
 
-placement <- function(inds, x = 50, y = 50, active = 2, x_loc = 6, y_loc = 7){ 
+placement <- function(inds, x = 200, y = 200, active = 2, x_loc = 6, y_loc = 7){ 
   for(i in 1:dim(inds)[1]){
     if(inds[i, active] == 1){
       inds[i, x_loc]<-sample(x = 1:x, size = 1, replace = TRUE);
@@ -190,7 +190,7 @@ placement <- function(inds, x = 50, y = 50, active = 2, x_loc = 6, y_loc = 7){
   return(inds)
 }
 
-movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 50, ymax = 50){
+movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 200, ymax = 200){
   distance <- c(-2,0,2); # Total movement range
   for(i in 1:dim(inds)[1]){
     if(inds[i, active] == 1 || inds[i, active] == 2){ # For every active individual move its xloc and yloc according to distance sample
@@ -209,13 +209,109 @@ movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 50, ymax = 5
   
 
 
-# Pollinator interaction ####
+# Pollinator interaction (feeding) ####
 
-# Plant interaction #### 
-# 
+## Pollinator feeding function which:
+# 1. Gets x/y loc for each pollinator (if active)
+# 2. Checks there are flowers are at that x/y loc
+# 3. Gets flowers species # and checks whether those flowers are species that pollinator can interact with
+# 4. If yes then nothing happens (currently, might want to add the maturity ticker here)
+# 5. If no, or if no flowers at x/y loc, then uptick hunger counter
+
+feeding <- function(poll, plant, x_loc = 6, y_loc = 7, hunger = 4, dead = 3, species = 1, active = 2, ncol = 12){
+  for(p in 1:length(poll[,1])){      
+    xloc   <- poll[p, x_loc]; # Get poll locations
+    yloc   <- poll[p, y_loc];
+    flowers <- sum( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Total of flowers at that location
+    if(poll[p, active] == 1 | poll[p, active] == 2){ # Check pollinator is active
+      if(flowers > 0){ # Check there are flowers at that location 
+        flowerinds <- which( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Get the flower individual at that location 
+        species <- plant[flowerinds, species] # Extract the species number of that flower 
+        if(poll[p, (ncol+species)] == 1){ # Check that this flower species is one which pollinator interacts with 
+          poll[p, hunger] <- 0 # If poll can interact with flower, hunger level resets to 0
+        } else {
+          poll[p, hunger] <- poll[p, hunger] + 1 # If poll can't interact with flower then uptick hunger
+        }}else {
+          poll[p, hunger] <- poll[p, hunger] + 1 # If flower not at location uptick hunger
+        }
+    } else {
+      poll[p, hunger] <- poll[p, hunger]  # If pollinator not active then leave hunger counter the same
+    }}
+  return(poll);
+}
+
+# Plant interaction (pollination) #### 
+
+## Function for plant/flower pollination which is broadly similar to pollinator feeding function in that it:
+# 1. Gets x/y loc for each plant (if active)
+# 2. Gets which pollinators are at that x/y loc
+# 3. Check whether those pollinators are species that flower can interact with
+# 4. If yes then increases 'pollination' measure by efficacy of visiting pollinators  
+# 5. If no then nothing happens (could add maturity uptick here but might be best saving to next step)
+
+pollination <- function(plant, poll, x_loc = 6, y_loc = 7, efficacy = 12, pollination = 4, dead = 3, species = 1, active = 2, ncol = 12){
+  for(p in 1:length(plant[,1])){      
+    xloc   <- plant[p, x_loc]; # Get plant locations
+    yloc   <- plant[p, y_loc];
+    polls <- sum( poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Total of pollinators at that location
+    if(plant[p, active] == 1 | plant[p, active] == 2){ # Check flower is active
+      if(polls > 0){ # Check there are pollinators at that location 
+        pollinds <- which(poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Get the pollinator individual(s) at that location 
+        for(i in pollinds){
+          eff <- poll[i, efficacy]; # Pull efficacy values for those pollinators
+          sp <- poll[i, species]; # Pull species numbers for those pollinators 
+          if(plant[p, (ncol+sp)] == 1){ # Check that this pollinator species is one which pollinator interacts with 
+            plant[p, pollination] <- plant[p, pollination] + eff # If flower can interact with pollinator add pollinator's efficacy to pollination column 
+          } }}else {
+            plant[p, pollination] <- plant[p, pollination]  # If pollinator not at location then pollination remains same
+          }
+    } else {
+      plant[p, pollination] <- plant[p, pollination]  # If flower not active then pollination remains the same
+    }}
+  return(plant);
+}
+
+
+# Maturity counter 
+# Pollinator maturation ####
+
+## Maturation function for pollinators which:
+#1. Checks pollinatior ind active
+#2. Checks pollinator ind alive
+#3. Checks hunger count - if threshold exceeded then dead
+#4. Otherwise, upticks maturation count
+
+
+pollmature <- function(poll, active = 2, dead = 3, hunger = 4, maturity = 5, threshold = 5){
+  for(p in 1:length(poll[,1])){
+    if (poll[p, active] == 1 | poll[p, active] == 2){ # Check if pollinator active
+      if (poll[p, dead] != 1){ # Check if pollinator is dead
+        if (poll[p, hunger] > threshold){ # Check hunger against threshold
+          poll[p, dead] <- 1} else{ # If threshold exceeded, mark pollinator as dead
+            poll[p,maturity] <- poll[p, maturity] + 1 } # Otherwise uptick pollinator maturity count
+      }}} 
+  return(poll) }
+
+# Plant maturation ####
+
+## Maturation function for plants which:
+#1. Checks plant ind active
+#2. Checks plant ind alive
+#3. Upticks maturity count
+
+# Currently this does not incorporate a check for whether a plant is fully-pollinated or not (which is the other condition that can trigger reproduction) because I have incorporated this into the plant reproduction function. This should be fine in terms of sequencing - it doesn't matter which of these criteria is reached first for reproduction and individuals will die after reproduction so should be picked up in the death check of this function at the next time step 
+
+
+plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
+  for(p in 1:length(plant[,1])){
+    if (plant[p, active] == 1 | plant[p, active] == 2){ # Check if plant active
+      if (plant[p, dead] != 1){ # Check if plant is dead
+        plant[p,maturity] <- plant[p, maturity] + 1 } # Otherwise uptick plant maturity count
+    }} 
+  return(plant) }
 # Run model ####
 timestep<- 23;
-time_steps<- 24;
+time_steps<- 50;
 
 
 
@@ -225,6 +321,8 @@ time_steps<- 24;
     poll     <- placement(poll);
     plant    <- placement(plant);
     poll     <- movement(poll);
+    poll     <- feeding(poll = poll, plant = plant);
+    plant    <- pollination(plant = plant, poll = poll);
     poll     <- poll[poll[, 3] == 0,]
     plant    <- plant[plant[, 3] == 0,]
     timestep <- timestep + 1; 
