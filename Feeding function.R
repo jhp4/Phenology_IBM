@@ -11,12 +11,12 @@ feeding <- function(poll, plant, x_loc = 6, y_loc = 7, hunger = 4, dead = 3, spe
     xloc   <- poll[p, x_loc]; # Get poll locations
     yloc   <- poll[p, y_loc];
     flowers <- sum( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Total of flowers at that location
-    if(poll[p, active] == 1){ # Check pollinator is active
+    if(poll[p, active] == 1 | poll[p, active] == 2){ # Check pollinator is active
       if(flowers > 0){ # Check there are flowers at that location 
         flowerinds <- which( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Get the flower individual at that location 
         species <- plant[flowerinds, species] # Extract the species number of that flower 
         if(poll[p, (ncol+species)] == 1){ # Check that this flower species is one which pollinator interacts with 
-          poll[p, hunger] <- poll[p, hunger] # If poll can interact with flower, hunger level remains the same
+          poll[p, hunger] <- 0 # If poll can interact with flower, hunger level reverts to 0
         } else {
           poll[p, hunger] <- poll[p, hunger] + 1 # If poll can't interact with flower then uptick hunger
         }}else {
