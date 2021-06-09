@@ -14,14 +14,10 @@ pollination <- function(plant, poll, x_loc = 6, y_loc = 7, efficacy = 12, pollin
     if(plant[p, active] == 1){ # Check flower is active
       if(polls > 0){ # Check there are pollinators at that location 
         pollinds <- which(poll[, x_loc] == xloc & poll[, y_loc] == yloc); # Get the pollinator individual(s) at that location 
-        for(i in 1:length(pollinds)){
-        species <- poll[i, species]; # Extract the species number of pollinator(s) 
-        efficacy<-poll[i, efficacy] # Exract pollinator efficacy for pollinators
-        if(plant[p, (ncol+species)] == 1){ # Check that this pollinator species is one which pollinator interacts with 
-          plant[p, pollination] <- plant[p, pollination] + efficacy # If flower can interact with pollinator add pollinator's efficacy to pollination column 
-        } else {
-          plant[p, pollination] <- plant[p, pollination]  # If poll can't interact with flower then pollination remains same
-        }}}else {
+        for(i in pollinds){
+        if(plant[p, (ncol+poll[i, species])] == 1){ # Check that this pollinator species is one which pollinator interacts with 
+          plant[p, pollination] <- plant[p, pollination] + poll[i, efficacy] # If flower can interact with pollinator add pollinator's efficacy to pollination column 
+        } }}else {
           plant[p, pollination] <- plant[p, pollination]  # If pollinator not at location then pollination remains same
         }
     } else {
@@ -47,8 +43,10 @@ plantcheck[,7] <- c(1,3,2) # Yloc for above
 plantcheck[,13] <- c(1,1,0) # Species 1 can interact with pollinator species 1, species 2 can't
 plantcheck[,14] <- c(1,1,1) # All species can interact with pollinator species 2 
 
+
 ## This should create a scenario where first plant individual gets pollinated by 2 species (for total of 0.4 pollination in col 4), second individual can interact but isn't at a location with any pollinators (pollination remains 0 in col4), third is at a location with 2 pollinators but can only interact with one of them (for total of 0.3 pollination in col 4)
 
-plantcheck <- pollination(plant = plantcheck, poll = pollcheck)
+plantcheck<- pollination(plant = plantcheck, poll = pollcheck)
+
 
 
