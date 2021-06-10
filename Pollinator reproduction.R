@@ -12,10 +12,10 @@
  
 
 pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
-reproducers <- poll[poll[,maturity] >= repro.threshold & poll[,active] == 1|2,, drop = FALSE]; # Extract all reproducing pollinator inidividuals
+reproducers <- which(poll[,maturity] >= repro.threshold & poll[,active] == c(1,2)); # Extract all reproducing pollinator inidividuals
 
-for(i in 1:length(reproducers[,1])){
-  new_polls     <- reproducers[rep(i,offspring),]; # Replicate reproducing individual's details to create offspring
+for(i in reproducers){
+  new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
   new_polls[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
   new_polls[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
   new_polls[, hunger] <- 0; # Reset all offspring hunger to 0 
