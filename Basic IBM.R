@@ -146,7 +146,7 @@ emergence <- function(inds,midpoint=10,scale=11){
 }
 
 poll[,8]<-emergence(poll)
-poll[,8]<-emergence(plant)
+plant[,8]<-emergence(plant)
 
 
 
@@ -377,7 +377,7 @@ plantreproduction <- function(plant, active = 2, dead = 3, pollinated = 4, matur
 
 # Run model ####
 
-timestep<- 23;
+timestep<- 48;
 time_steps<- 50;
 
 
@@ -391,8 +391,8 @@ time_steps<- 50;
     poll     <- feeding(poll = poll, plant = plant);
     plant    <- pollination(plant = plant, poll = poll);
     poll     <- poll[poll[, 3] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
-    poll     <- pollreproduction(poll);
-    plant    <- plantreproduction(plant);
+    poll     <- pollreproduction(poll = poll);
+    plant    <- plantreproduction(plant = plant);
     poll     <- poll[poll[, 3] == 0,]
     plant    <- plant[plant[, 3] == 0,];
     timestep <- timestep + 1; 
