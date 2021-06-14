@@ -23,7 +23,7 @@ placementplant <- function(plant, x = 200, y = 200, active = 2, dead = 3, x_loc 
       on_cell <- sum(plant[, x_loc] == plant[i, x_loc] & plant[, y_loc] == plant[i, y_loc]); # Check whether any other inds at plant emergence location
       if(on_cell > 1){
         plant[i, dead] <- 1 # If there are, emerging plant dies  
-      }  else             
+      }              
     }
   }
   return(plant)
