@@ -15,13 +15,13 @@ offspring.deets <- function(offspring.inds, parent.inds, parents, new.gen){
   for (i in (1:length(offspring.inds))){ # Loop through offspring.inds vector to populate array
     offspring.number = offspring.inds[i]; # Get number of offspring from offspring.inds vector
     parent.ind = parent.inds[i]; # Get ID of parent producing these offspring
-    new.rows = rep(parents[parent.ind,], offspring.number); # Generate new rows of information for offspring based on parent info 
-    new.gen[((start.point+1):(start.point + offspring.number)),] <- new.rows; # Populate relevant rows with offsrping information
+    for (j in (1:offspring.number)){
+      row.no = start.point + j;
+      new.gen[row.no, ] <- parents[parent.ind,];
+    }
     start.point = start.point + offspring.number # Redefine start.point (so next i starts from correct point and doesn't overwrite previous inds information)
   }
   return(new.gen)
 }
-
-
 
 new.gen <- offspring.deets(new.gen = new.gen, offspring.inds = offspring.inds, parent.inds = parent.inds, parents = parents)
