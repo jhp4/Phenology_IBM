@@ -364,6 +364,7 @@ plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
 
 pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
   
+  
   # BD: I was a bit confused by this line, specifically the 
   #     poll[,active] == c(1,2) -- this is comparing every other row (1, then 2)
   #     I think what you wanted was an or statment, which I've changed
@@ -371,17 +372,26 @@ pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4
   reproducers <- which(poll[,maturity] >= repro.threshold & 
                          (poll[,active] == 1 | poll[,active] == 2)); # Extract all reproducing pollinator inidividuals
   
-  for(i in reproducers){
-    new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
-    new_polls[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-    new_polls[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
-    new_polls[, hunger] <- 0; # Reset all offspring hunger to 0 
-    new_polls[, maturity] <- 0; # Reset all offspring maturity 
-    new_polls[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
-    poll <- rbind(poll, new_polls) # Bind offspring to pollinator dataframe 
-    poll[i, 3] <- 1 
-    print(i);
-  }# Mark parent as dead after reproducing
+  if(length(reproducers) > 0){ # BD No need to do any of this if not.
+    # BD: Here's an attempt to avoid the rbind below
+    num_reproducers <- length(reproducers); # Get the number of reproducers
+    num_offspring   <- 3 * num_reproducers; # Note, could adj for ind variation
+    
+    new_polls <- matrix(data = NA, nrow = num_reproducers + num_offspring,
+                        ncol = ncol(reproducers)){    
+    
+    for(i in reproducers){
+      new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
+      new_polls[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
+      new_polls[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
+      new_polls[, hunger] <- 0; # Reset all offspring hunger to 0 
+      new_polls[, maturity] <- 0; # Reset all offspring maturity 
+      new_polls[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
+      poll <- rbind(poll, new_polls) # Bind offspring to pollinator dataframe 
+      poll[i, 3] <- 1 
+      print(i);
+    }# Mark parent as dead after reproducing 
+  }
   
   return(poll)
 }
