@@ -324,7 +324,13 @@ pollmature <- function(poll, active = 2, dead = 3, hunger = 4, maturity = 5, thr
 #2. Checks plant ind alive
 #3. Upticks maturity count
 
-# Currently this does not incorporate a check for whether a plant is fully-pollinated or not (which is the other condition that can trigger reproduction) because I have incorporated this into the plant reproduction function. This should be fine in terms of sequencing - it doesn't matter which of these criteria is reached first for reproduction and individuals will die after reproduction so should be picked up in the death check of this function at the next time step 
+# Currently this does not incorporate a check for whether a plant is
+# fully-pollinated or not (which is the other condition that can trigger
+# reproduction) because I have incorporated this into the plant reproduction
+# function. This should be fine in terms of sequencing - it doesn't matter which
+# of these criteria is reached first for reproduction and individuals will die
+# after reproduction so should be picked up in the death check of this function
+# at the next time step
 
 
 plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
@@ -337,19 +343,33 @@ plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
 
 # Pollinator reproduction ####
 
-# Reproduction function for pollinators which:
-# 1. Creates a list of pollinator inds which are active (state 1 or 2) and have reached reproductive maturity (defined by maturity reaching  repro.threshold value)
-# 2. Loops through each reproducing individual and replicates their row information based on offspring number (currently a set number  of offspring but would be straightforward to make this a sample from a distribution)
-# 3. Tidies up column information for offspring (makes sure dead, hunger, maturity and emergence columns are all set to 0, makes sure active state is set to 3 which makes them dormant for current season)
-# 4. Binds new offspring rows to existing pollinator array
-# 5. Makes reproducing individuals dead (set dead column to 1)
+# Reproduction function for pollinators which: 
+# 1. Creates a list of pollinator
+# inds which are active (state 1 or 2) and have reached reproductive maturity
+# (defined by maturity reaching  repro.threshold value) 
+# 2. Loops through each
+# reproducing individual and replicates their row information based on offspring
+# number (currently a set number  of offspring but would be straightforward to
+# make this a sample from a distribution) 
+# 3. Tidies up column information for
+# offspring (makes sure dead, hunger, maturity and emergence columns are all set
+# to 0, makes sure active state is set to 3 which makes them dormant for current
+# season) 
+# 4. Binds new offspring rows to existing pollinator array 5. Makes
+# reproducing individuals dead (set dead column to 1)
 
 ## Offspring are currently identical to their parents. Could add variance to this but phenological traits and emergence will be adjusted and recalculated in new season anyway
 
 
 
 pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
-  reproducers <- which(poll[,maturity] >= repro.threshold & poll[,active] == c(1,2)); # Extract all reproducing pollinator inidividuals
+  
+  # BD: I was a bit confused by this line, specifically the 
+  #     poll[,active] == c(1,2) -- this is comparing every other row (1, then 2)
+  #     I think what you wanted was an or statment, which I've changed
+  #     Note, could also just do `& poll[active] > 0` maybe?
+  reproducers <- which(poll[,maturity] >= repro.threshold & 
+                         (poll[,active] == 1 | poll[,active] == 2)); # Extract all reproducing pollinator inidividuals
   
   for(i in reproducers){
     new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
@@ -359,7 +379,9 @@ pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4
     new_polls[, maturity] <- 0; # Reset all offspring maturity 
     new_polls[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
     poll <- rbind(poll, new_polls) # Bind offspring to pollinator dataframe 
-    poll[i, 3] <- 1 }# Mark parent as dead after reproducing
+    poll[i, 3] <- 1 
+    print(i);
+  }# Mark parent as dead after reproducing
   
   return(poll)
 }
@@ -402,12 +424,12 @@ plantreproduction <- function(plant, active = 2, dead = 3, pollinated = 4, matur
 
 # Run model ####
 
-timestep<- 48;
+timestep  <- 1;
 time_steps<- 50;
 
 
 
-    while(timestep < time_steps){
+while(timestep < time_steps){
     poll     <- activation(poll);
     plant    <- activation(plant);
     poll     <- placement(poll);
