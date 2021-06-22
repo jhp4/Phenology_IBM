@@ -175,22 +175,39 @@ activation<- function(inds, active = 2, emergence = 8){
 
 # Landscape placement and movement ####
 
+
 # Placement function checks to see if individual is active then, if active, places them in the environment
 # x is the size of the landscape x axis, y is the size of the landscape y axis
 
-# Need to figure out how to code this so for plants it checks which locations are already filled as 
 
-placement <- function(inds, x = 200, y = 200, active = 2, x_loc = 6, y_loc = 7){ 
-  for(i in 1:dim(inds)[1]){
-    if(inds[i, active] == 1){
-      inds[i, x_loc]<-sample(x = 1:x, size = 1, replace = TRUE);
-      inds[i, y_loc]<-sample(x = 1:y, size = 1, replace = TRUE);
+placementpoll <- function(poll, x = 20, y = 20, active = 2, x_loc = 6, y_loc = 7){ 
+  for(i in 1:length(poll[, active])){
+    if(poll[i, active] == 1){
+      poll[i, x_loc]<-sample(x = 1:x, size = 1, replace = TRUE);
+      poll[i, y_loc]<-sample(x = 1:y, size = 1, replace = TRUE);
     }
   }
-  return(inds)
+  return(poll)
 }
 
-movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 200, ymax = 200){
+## Need a separate function for plants as multiple individuals can't occupy the same space. Therefore need to check whether there are any other plants there: if so, emerging plant dies 
+
+placementplant <- function(plant, x = 20, y = 20, active = 2, dead = 3, x_loc = 6, y_loc = 7){ 
+  for(i in 1:length(plant[,active])){
+    if(plant[i, active] == 1){
+      plant[i, x_loc]<-sample(x = 1:x, size = 1, replace = TRUE);
+      plant[i, y_loc]<-sample(x = 1:y, size = 1, replace = TRUE);
+      on_cell <- sum(plant[, x_loc] == plant[i, x_loc] & plant[, y_loc] == plant[i, y_loc]); # Check whether any other inds at plant emergence location
+      if(on_cell > 1){
+        plant[i, dead] <- 1 # If there are, emerging plant dies  
+      }              
+    }
+  }
+  return(plant)
+}
+
+
+movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 20, ymax = 20){
   distance <- c(-2,0,2); # Total movement range
   for(i in 1:dim(inds)[1]){
     if(inds[i, active] == 1 || inds[i, active] == 2){ # For every active individual move its xloc and yloc according to distance sample
@@ -203,10 +220,16 @@ movement <- function(inds, active = 2, x_loc = 6, y_loc = 7, xmax = 200, ymax = 
     if(inds[i,y_loc] > ymax){
       inds[i,y_loc] <- inds[i,y_loc] - ymax;
     }
+    # Do you not need something like the below for the other edges?
+    if(inds[i, x_loc] < 0){
+      inds[i, x_loc] <- inds[i, x_loc] + xmax;
+    }
+    if(inds[i, y_loc] < 0){
+      inds[i, y_loc] <- inds[i, y_loc] + ymax;
+    }
   }
   return(inds)
 }
-  
 
 
 # Pollinator interaction (feeding) ####
@@ -226,8 +249,8 @@ feeding <- function(poll, plant, x_loc = 6, y_loc = 7, hunger = 4, dead = 3, spe
     if(poll[p, active] == 1 | poll[p, active] == 2){ # Check pollinator is active
       if(flowers > 0){ # Check there are flowers at that location 
         flowerinds <- which( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Get the flower individual at that location 
-        species <- plant[flowerinds, species] # Extract the species number of that flower 
-        if(poll[p, (ncol+species)] == 1){ # Check that this flower species is one which pollinator interacts with 
+        speciesref <- plant[flowerinds, species] # Extract the species number of that flower 
+        if(poll[p, (ncol+speciesref)] == 1){ # Check that this flower species is one which pollinator interacts with 
           poll[p, hunger] <- 0 # If poll can interact with flower, hunger level resets to 0
         } else {
           poll[p, hunger] <- poll[p, hunger] + 1 # If poll can't interact with flower then uptick hunger
@@ -322,26 +345,57 @@ plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
 ## Offspring are currently identical to their parents. Could add variance to this but phenological traits and emergence will be adjusted and recalculated in new season anyway
 
 
-
 pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
-  reproducers <- which(poll[,maturity] >= repro.threshold & poll[,active] == c(1,2)); # Extract all reproducing pollinator inidividuals
   
-  for(i in reproducers){
-    new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
-    new_polls[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-    new_polls[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
-    new_polls[, hunger] <- 0; # Reset all offspring hunger to 0 
-    new_polls[, maturity] <- 0; # Reset all offspring maturity 
-    new_polls[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
-    poll <- rbind(poll, new_polls) # Bind offspring to pollinator dataframe 
-    poll[i, 3] <- 1 }# Mark parent as dead after reproducing
-  
-  return(poll)
+  reproducers <- which(poll[,maturity] >= repro.threshold & 
+                         (poll[,active] == 1 | poll[,active] == 2)); # Extract all reproducing pollinator inidividuals
+
+  if(length(reproducers) > 0){ # BD No need to do any of this if not.
+    # BD: Here's an attempt to avoid the rbind below
+    num_old_poll    <- dim(poll)[1]; # Number of rows in poll
+    num_reproducers <- length(reproducers); # Get the number of reproducers
+    num_offspring   <- offspring * num_reproducers; # Could adj for ind var
+    
+    new_polls_a  <- array(data = NA,  # Array of correct size
+                          dim = c(num_old_poll + num_offspring, dim(poll)[2]));
+    
+    # Not sure if I like doing this -- might be best to work with arrays rather
+    # than data frames, but this might not be so bad (just have to do once).
+    new_polls    <- as.data.frame(new_polls_a);
+    
+    new_polls[1:num_old_poll,] <- poll;
+    # Now we have the old list and a bunch of NAs that we need to replace with
+    # offspring values -- again, all to avoid the rbind.
+    
+    # Need to keep a record of both the parent and the offspring rows
+    offspring_parents <- rep(x = reproducers, times = 3);
+    # Can `sort` the above, but it's really not necessary, I don't think
+    # Now we have the IDs of the parents of each offspring
+    # Could also substitute `times = 3` with a vector of length(reproducers)
+    
+    act_row <- num_old_poll + 1;
+    end_row <- dim(new_polls)[1];
+    
+    while(act_row <= end_row){
+      # A couple subsets, but just replacing the offspring row with the row
+      # indicated by offspring_parents[act_row];
+      new_polls[act_row, ]          <- poll[ offspring_parents[(act_row-num_old_poll)] , ];
+      new_polls[act_row, active]    <- 3;
+      new_polls[act_row, dead]      <- 0;
+      new_polls[act_row, hunger]    <- 0;
+      new_polls[act_row, maturity]  <- 0;
+      new_polls[act_row, emergence] <- 0;
+      act_row                       <- act_row + 1; # Super important
+    } # It looks longer, but we've avoided the rbind
+    
+    colnames(new_polls) <- colnames(poll);
+  }else{ # Else just replace with the original polls
+    new_polls <- poll;
+  }
+  return(new_polls)
 }
 
 # Plant reproduction #### 
-
-
 
 
 # Reproduction function for plants, differs from pollinators in that it needs to check pollination status and apply it to offspring number, otherwise similar. Function:
@@ -356,44 +410,117 @@ pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4
 
 
 
-plantreproduction <- function(plant, active = 2, dead = 3, pollinated = 4, maturity = 5, maturity.threshold = 5, emergence = 8,  seeds = 6){
-  reproducers <- which(plant[, maturity] >= maturity.threshold | plant[, pollinated] >= 1 & plant[,active] == c(1,2));# Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
+
+plantreproduction <- function(plant, active = 2, dead = 3, pollinated = 4, maturity = 5, maturity.threshold = 5, emergence = 8,  seeds = 6, young = 13){
   
-  for(i in reproducers){
-    offspring <- round((pmin(plant[i, pollinated], 1) * seeds), digits = 0) # Offspring equal to either individual's pollinated proportion or 1 (whichever is lower) multiplied by seeds (maximum offspring value) rounded to nearest whole number
-    new_plants     <- plant[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
-    new_plants[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-    new_plants[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
-    new_plants[, pollinated] <- 0; # Reset all offspring pollination level to 0 
-    new_plants[, maturity] <- 0; # Reset all offspring maturity 
-    new_plants[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
-    plant <- rbind(plant, new_plants) # Bind offspring to plant dataframe 
-    plant[i, 3] <- 1 }# Mark parent as dead after reproducing
+  # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
+  reproducers <- which((plant[,active] == 1 | plant[,active] == 2) & 
+                         (plant[, maturity] >= maturity.threshold | plant[, pollinated] >= 1)); 
   
-  return(plant)
+  if(length(reproducers) > 0){ # No need to do any of this if not.
+    
+    for( i in 1:length(reproducers)) { # Take each reproducer and calculate young
+      
+      parent <- reproducers[i];
+      
+      # Young calculated by taking lower of pollinated proportion or 1, multiplying it by seeds variable and rounding to nearest whole number 
+      plant[parent, young] <- round((pmin(plant[parent, pollinated], 1) * seeds), digits = 0); 
+      
+      
+      # Then mark parent/reproducer as dead
+      plant[parent, dead] <- 1;
+    }
+    
+    # Create vector of offspring numbers (necessary to remove 0s first? If so can add subset instruction for  plant[, young] != 0))
+    offspring <- as.vector(subset(plant[, young], plant[, young] != 0)); 
+    reproducers <- which(plant[, young] != 0);
+    
+    # Create new array to populate with new plant information
+    num_old_plant    <- dim(plant)[1]; # Number of rows in plant
+    num_offspring    <- sum(offspring)
+    
+    new_plant_a <- array(data = NA,  # Array of correct size
+                         dim = c((num_old_plant + num_offspring), dim(plant)[2]));
+    
+    # Populate new array with old plant info
+    new_plant    <- as.data.frame(new_plant_a);
+    
+    new_plant[1:num_old_plant,] <- plant;
+    
+    # Create a record of offspring parents as a product of parent info * number of offspring per parent (here as vector)
+    offspring_parents <- rep(x = reproducers, times = offspring);
+    
+    act_row <- num_old_plant + 1;
+    end_row <- dim(new_plant)[1];
+    
+    while(act_row <= end_row){
+      # A couple subsets, but just replacing the offspring row with the row
+      # indicated by offspring_parents[act_row];
+      new_plant[act_row, ]          <- plant[ offspring_parents[(act_row-num_old_plant)] , ];
+      new_plant[act_row, active]    <- 3;
+      new_plant[act_row, dead]      <- 0;
+      new_plant[act_row, maturity]  <- 0;
+      new_plant[act_row, emergence] <- 0;
+      new_plant[act_row, young]     <- 0;
+      act_row                       <- act_row + 1; # Super important
+    }
+    
+    colnames(new_plant) <- colnames(plant);
+    
+  }else{ # Else just replace with the original plant info
+    new_plant <- plant;
+  }
+  return(new_plant)
 }
+
 
 
 
 # Run model ####
 
 timestep<- 48;
-time_steps<- 50;
+time_steps<- 54;
+
+plant[,8]<-48
+poll[,8]<-48
 
 
 
-    while(timestep < time_steps){
-    poll     <- activation(poll);
-    plant    <- activation(plant);
-    poll     <- placement(poll);
-    plant    <- placement(plant);
-    poll     <- movement(poll);
-    poll     <- feeding(poll = poll, plant = plant);
-    plant    <- pollination(plant = plant, poll = poll);
-    poll     <- poll[poll[, 3] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
-    poll     <- pollreproduction(poll = poll);
-    plant    <- plantreproduction(plant = plant);
-    poll     <- poll[poll[, 3] == 0,]
-    plant    <- plant[plant[, 3] == 0,];
-    timestep <- timestep + 1; 
+while(timestep < time_steps){
+  
+  if(length(poll[,1]) == 0) {
+    stop("All pollinators dead")
+  }
+  
+  if(length(plant[,1]) ==0) {
+    stop("All plants dead")
+  }
+  
+  poll     <- activation(poll);
+  plant    <- activation(plant);
+  poll     <- placementpoll(poll);
+  plant    <- placementplant(plant);
+  plant    <- plant[plant[, 3] == 0,]; # Remove dead plants (may happen as result of placement)
+  poll     <- movement(poll);
+  poll     <- feeding(poll = poll, plant = plant);
+  plant    <- pollination(plant = plant, poll = poll);
+  poll     <- poll[poll[, 3] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
+  poll     <- pollmature(poll = poll);
+  plant    <- plantmature(plant = plant);
+  poll     <- pollreproduction(poll = poll);
+  plant    <- plantreproduction(plant = plant);
+  poll     <- poll[poll[, 3] == 0,]
+  plant    <- plant[plant[, 3] == 0,];
+  timestep <- timestep + 1; 
 }
+
+
+  poll     <- pollreproduction(poll = poll);
+  
+ 
+  
+  
+
+}
+
+
