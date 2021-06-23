@@ -251,7 +251,7 @@ feeding <- function(poll, plant, x_loc = 6, y_loc = 7, hunger = 4, dead = 3,
       if(flowers > 0){ # Check there are flowers at that location 
         flowerinds <- which( plant[, x_loc] == xloc & plant[, y_loc] == yloc); # Get the flower individual at that location 
         speciesref <- plant[flowerinds, species] # Extract the species number of that flower 
-        if(poll[p, (ncol+speciesref[1])] == 1){ # Check that this flower species is one which pollinator interacts with 
+        if(poll[p, (ncol+speciesref)[1]] == 1){ # Check that this flower species is one which pollinator interacts with 
           poll[p, hunger] <- 0 # If poll can interact with flower, hunger level resets to 0
         } else {
           poll[p, hunger] <- poll[p, hunger] + 1 # If poll can't interact with flower then uptick hunger
@@ -345,12 +345,17 @@ plantmature <- function(plant, active = 2, dead = 3, maturity = 5){
 
 ## Offspring are currently identical to their parents. Could add variance to this but phenological traits and emergence will be adjusted and recalculated in new season anyway
 
-
-pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
+pollreproduction <- function(poll, species = 1, active = 2, dead = 3, 
+                             hunger = 4, maturity = 5, emergence = 8, 
+                             repro.threshold = 5, offspring = 3){
   
   reproducers <- which(poll[,maturity] >= repro.threshold & 
                          (poll[,active] == 1 | poll[,active] == 2)); # Extract all reproducing pollinator inidividuals
 
+  if(length(reproducers) > 0){
+    poll[reproducers, dead] <- 1; # This should stick a 1 in the third column
+  }                               # For all reproducers (if there are any)
+  
   if(length(reproducers) > 0){ # BD No need to do any of this if not.
     # BD: Here's an attempt to avoid the rbind below
     num_old_poll    <- dim(poll)[1]; # Number of rows in poll
