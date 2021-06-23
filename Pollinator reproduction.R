@@ -11,20 +11,64 @@
 
  
 
+
+
 pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4, maturity = 5, emergence = 8, repro.threshold = 5, offspring = 3){
-reproducers <- which(poll[,maturity] >= repro.threshold & poll[,active] == c(1,2)); # Extract all reproducing pollinator inidividuals
+  
+  reproducers <- which(poll[,maturity] >= repro.threshold & 
+                         (poll[,active] == 1 | poll[,active] == 2)); # Extract all reproducing pollinator inidividuals
+  
+  if(length(reproducers) > 0){ # BD No need to do any of this if not.
+    # BD: Here's an attempt to avoid the rbind below
+    num_old_poll    <- dim(poll)[1]; # Number of rows in poll
+    num_reproducers <- length(reproducers); # Get the number of reproducers
+    num_offspring   <- offspring * num_reproducers; # Could adj for ind var
+    
+    new_polls_a  <- array(data = NA,  # Array of correct size
+                          dim = c(num_old_poll + num_offspring, dim(poll)[2]));
+    
+    # Not sure if I like doing this -- might be best to work with arrays rather
+    # than data frames, but this might not be so bad (just have to do once).
+    new_polls    <- as.data.frame(new_polls_a);
+    
+    new_polls[1:num_old_poll,] <- poll;
+    # Now we have the old list and a bunch of NAs that we need to replace with
+    # offspring values -- again, all to avoid the rbind.
+    
+    # Need to keep a record of both the parent and the offspring rows
+    offspring_parents <- rep(x = reproducers, times = 3);
+    # Can `sort` the above, but it's really not necessary, I don't think
+    # Now we have the IDs of the parents of each offspring
+    # Could also substitute `times = 3` with a vector of length(reproducers)
+    
+    act_row <- num_old_poll + 1;
+    end_row <- dim(new_polls)[1];
+    
+    while(act_row <= end_row){
+      # A couple subsets, but just replacing the offspring row with the row
+      # indicated by offspring_parents[act_row];
+      new_polls[act_row, ]          <- poll[ offspring_parents[(act_row-num_old_poll)] , ];
+      new_polls[act_row, active]    <- 3;
+      new_polls[act_row, dead]      <- 0;
+      new_polls[act_row, hunger]    <- 0;
+      new_polls[act_row, maturity]  <- 0;
+      new_polls[act_row, emergence] <- 0;
+      act_row                       <- act_row + 1; # Super important
+    } # It looks longer, but we've avoided the rbind
+    
+    colnames(new_polls) <- colnames(poll);
+  }else{ # Else just replace with the original polls
+    new_polls <- poll;
+  }
+  return(new_polls)
+}
 
-for(i in reproducers){
-  new_polls     <- poll[rep(i,offspring),, drop = FALSE]; # Replicate reproducing individual's details to create offspring
-  new_polls[, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-  new_polls[, dead] <- 0; # Make sure all offspring are not dead (dead inds shouldn't be getting to this stage but additional check)
-  new_polls[, hunger] <- 0; # Reset all offspring hunger to 0 
-  new_polls[, maturity] <- 0; # Reset all offspring maturity 
-  new_polls[, emergence] <- 0; # Reset all offspring emergence to 0 (shouldn't matter as gets overwritten in new season anyway)
-  poll <- rbind(poll, new_polls) # Bind offspring to pollinator dataframe 
-  poll[i, 3] <- 1 }# Mark parent as dead after reproducing
 
-return(poll)
+
+# Tried inserting this for loop to mark reproducers as dead (after reproducers indentified, before if statement) but R didn't like it
+for( i in reproducers) {
+  
+  poll[i, dead] <- 1;
 }
 
 

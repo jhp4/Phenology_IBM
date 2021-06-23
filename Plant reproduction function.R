@@ -12,51 +12,70 @@
 
 
 
+
 plantreproduction <- function(plant, active = 2, dead = 3, pollinated = 4, maturity = 5, maturity.threshold = 5, emergence = 8,  seeds = 6, young = 13){
   
-  reproducers <- which(plant[,active] == c(1,2) & plant[, maturity] >= maturity.threshold | plant[, pollinated] >= 1); # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
+  # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
+  reproducers <- which((plant[,active] == 1 | plant[,active] == 2) & 
+                         (plant[, maturity] >= maturity.threshold | plant[, pollinated] >= 1)); 
   
-  for( i in reproducers) {
-    plant[i, young] <- round((pmin(plant[i, pollinated], 1) * seeds), digits = 0); # Populate 'offspring' column for reproducers
-    return(plant)}
-  
-  reproducers <- which(plant[,young] != 0) # Redefine reproducers to those which have at least 1 young (I think this is necessary as number of young calculated in previous step can equal 0 which would break next part of function)
-  
-  offspring <- as.vector(subset(plant[, young], plant[, young] != 0)) # Create vector of offspring numbers by taking all non-0 values from 'young' column
-  
-  new.gen <- array(data=0, dim = c((nrow(plant) + sum(offspring)), ncol(plant))); # Create new array that's as long as parent array + offspring
-  
-  
-  
-  new.gen[1:nrow(plant),] <- plant; # Populate new array with original array info
-  
-  start.point <- nrow(plant);  # Get total row number of original plant array and define as start point
-  
-  for (j in (1:length(offspring))){ # Loop through offspring vector to populate array
+  if(length(reproducers) > 0){ # No need to do any of this if not.
     
-    offspring.number <- offspring[j]; # Get number of offspring to be generated each loop from offspring vector
-    
-    parent <- reproducers[j]; # Get ID of parent producing these offspring
-    
-    for (k in (1:offspring.number)){ # Then loop through offspring number to add a row for each offspring 
+    for( i in 1:length(reproducers)) { # Take each reproducer and calculate young
       
-      row.no = start.point + k; # Set within-loop start point. Should move down rows with each j and the initial start.point will be redefined for each batch of offspring
+      parent <- reproducers[i];
       
-      new.gen[row.no, ] <- plant[parent,]; # Populate row with parent info  
-      new.gen[row.no, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-      new.gen[row.no, dead] <- 0; # Make sure all offspring are not dead 
-      new.gen[row.no, pollinated] <- 0; # Reset all offspring pollination level to 0 
-      new.gen[row.no, maturity] <- 0; # Reset all offspring maturity 
-      new.gen[row.no, emergence] <- 0; # Reset all offspring emergence to 0 
+      # Young calculated by taking lower of pollinated proportion or 1, multiplying it by seeds variable and rounding to nearest whole number 
+      plant[parent, young] <- round((pmin(plant[parent, pollinated], 1) * seeds), digits = 0); 
+      
+      
+      # Then mark parent/reproducer as dead
+      plant[parent, dead] <- 1;
     }
-    start.point = start.point + offspring.number # Redefine start.point (so next loop starts from correct point and doesn't overwrite previous offspring inds information)
-    return(new.gen)
+    
+    # Create vector of offspring numbers (necessary to remove 0s first? If so can add subset instruction for  plant[, young] != 0))
+    offspring <- as.vector(subset(plant[, young], plant[, young] != 0)); 
+    reproducers <- which(plant[, young] != 0);
+    
+    # Create new array to populate with new plant information
+    num_old_plant    <- dim(plant)[1]; # Number of rows in plant
+    num_offspring    <- sum(offspring)
+    
+    new_plant_a <- array(data = NA,  # Array of correct size
+                         dim = c((num_old_plant + num_offspring), dim(plant)[2]));
+    
+    # Populate new array with old plant info
+    new_plant    <- as.data.frame(new_plant_a);
+    
+    new_plant[1:num_old_plant,] <- plant;
+    
+    # Create a record of offspring parents as a product of parent info * number of offspring per parent (here as vector)
+    offspring_parents <- rep(x = reproducers, times = offspring);
+    
+    act_row <- num_old_plant + 1;
+    end_row <- dim(new_plant)[1];
+    
+    while(act_row <= end_row){
+      # A couple subsets, but just replacing the offspring row with the row
+      # indicated by offspring_parents[act_row];
+      new_plant[act_row, ]          <- plant[ offspring_parents[(act_row-num_old_plant)] , ];
+      new_plant[act_row, active]    <- 3;
+      new_plant[act_row, dead]      <- 0;
+      new_plant[act_row, maturity]  <- 0;
+      new_plant[act_row, emergence] <- 0;
+      new_plant[act_row, young]     <- 0;
+      act_row                       <- act_row + 1; # Super important
+    }
+    
+    colnames(new_plant) <- colnames(plant);
+    
+  }else{ # Else just replace with the original plant info
+    new_plant <- plant;
   }
-  
+  return(new_plant)
 }
 
-
-
+  
 
 # Check function works with dummy data
 
@@ -75,44 +94,3 @@ plantcheck[,14] <- c(1,0,1,0) # Make some able to interact with plant species 1
 
 plantcheck <- plantreproduction(plant = plantcheck)
 
-
-
-
-reproducers <- which(plantcheck[,active] == c(1,2) & plantcheck[, maturity] >= maturity.threshold | plantcheck[, pollinated] >= 1); # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
-
-for( i in reproducers) {
-  plantcheck[i, young] <- round((pmin(plantcheck[i, pollinated], 1) * seeds), digits = 0); # Populate 'offspring' column for reproducers
-  return(plantcheck)}
-
-reproducers <- which(plantcheck[,young] != 0) # Redefine reproducers to those which have at least 1 young (I think this is necessary as number of young calculated in previous step can equal 0 which would break next part of function)
-
-offspring <- as.vector(subset(plantcheck[, young], plantcheck[, young] != 0)) # Create vector of offspring numbers by taking all non-0 values from 'young' column
-
-new.gen <- array(data=0, dim = c((nrow(plantcheck) + sum(offspring)), ncol(plantcheck))); # Create new array that's as long as parent array + offspring
-
-
-
-new.gen[1:nrow(plantcheck),] <- plantcheck; # Populate new array with original array info
-
-start.point <- nrow(plantcheck);  # Get total row number of original plant array and define as start point
-
-for (j in (1:length(offspring))){ # Loop through offspring vector to populate array
-  
-  offspring.number <- offspring[j]; # Get number of offspring to be generated each loop from offspring vector
-  
-  parent <- reproducers[j]; # Get ID of parent producing these offspring
-  
-  for (k in (1:offspring.number)){ # Then loop through offspring number to add a row for each offspring 
-    
-    row.no = start.point + k; # Set within-loop start point. Should move down rows with each j and the initial start.point will be redefined for each batch of offspring
-    
-    new.gen[row.no, ] <- plantcheck[parent,]; # Populate row with parent info  
-    new.gen[row.no, active] <- 3; # Make all offspring active level 3 so they are dormant and picked up in next season 
-    new.gen[row.no, dead] <- 0; # Make sure all offspring are not dead 
-    new.gen[row.no, pollinated] <- 0; # Reset all offspring pollination level to 0 
-    new.gen[row.no, maturity] <- 0; # Reset all offspring maturity 
-    new.gen[row.no, emergence] <- 0; # Reset all offspring emergence to 0 
-  }
-  start.point = start.point + offspring.number # Redefine start.point (so next loop starts from correct point and doesn't overwrite previous offspring inds information)
-return(new.gen)
-}
