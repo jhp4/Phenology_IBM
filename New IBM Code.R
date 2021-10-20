@@ -1,4 +1,6 @@
 
+rm(list = ls())
+
 library("tidyverse")
 
 #### Set global parameters (as part of start-up outside model run) ####
@@ -29,8 +31,8 @@ min_midpoint <- 90
 
 # Currently both plant and pollinator species sample from the same scale range 
 
-max_scale <- 0.1
-min_scale <- 0.05
+max_scale <- 0.6
+min_scale <- 0.3
 
 # Skew range - this defines the maximum and minimum skew from which the skew parameter for each species will be drawn. The skew parameter affects the rate at which the lower symptote of the logistic curve reaches the midpoint. In practical terms, the more the value deviates from +/-1 the greater the skew. A value of 0-1 wil result in a greater to lesser left-skew to the distribution curve. A value of -1-0 will results in a greater to lesser right-skew. 
 
@@ -574,7 +576,7 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
 # 4. If yes then nothing happens (currently, might want to add the maturity ticker here)
 # 5. If no, or if no flowers at x/y loc, then uptick hunger counter
 
-feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = species, f.active = active, f.ncol = total_inds_cols){
+feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = speciesid, f.active = active, f.ncol = total_inds_cols){
   for(p in 1:length(poll[,1])){      
     xloc   <- poll[p, f.x_loc]; # Get poll locations
     yloc   <- poll[p, f.y_loc];
@@ -605,7 +607,7 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
 # 4. If yes then increases 'pollination' measure by efficacy of visiting pollinators  
 # 5. If no then nothing happens (could add maturity uptick here but might be best saving to next step)
 
-p.pollination <- function(plant, poll, p.x_loc = x_loc, p.y_loc = y_loc, p.efficacy = efficacy, p.pollination = pollinated, p.dead = dead, p.species = species, p.active = active, ncol = total_inds_cols){
+p.pollination <- function(plant, poll, p.x_loc = x_loc, p.y_loc = y_loc, p.efficacy = efficacy, p.pollination = pollinated, p.dead = dead, p.species = speciesid, p.active = active, ncol = total_inds_cols){
   for(p in 1:length(plant[,1])){      
     xloc   <- plant[p, p.x_loc]; # Get plant locations
     yloc   <- plant[p, p.y_loc];
@@ -749,11 +751,12 @@ pollreproduction <- function(poll, pr.active = active, pr.dead = dead, pr.hunger
 
 
 
-plantreproduction <- function(plant, active, dead, pollinated, maturity, maturity.threshold = lifespan, emergence,  seeds = plant_offspring, young = seedlings){
+plantreproduction <- function(plant){
   
   # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
+  
   reproducers <- which((plant[,active] == 1 | plant[,active] == 2) & 
-                         (plant[, maturity] >= 5 | plant[, pollinated] >= 1)); 
+                         (plant[, maturity] >= plant[,lifespan] | plant[, pollinated] >= 1)); 
   
   if(length(reproducers) > 0){ # No need to do any of this if not.
     
@@ -762,16 +765,16 @@ plantreproduction <- function(plant, active, dead, pollinated, maturity, maturit
       parent <- reproducers[i];
       
       # Young calculated by taking lower of pollinated proportion or 1, multiplying it by seeds variable and rounding to nearest whole number 
-      plant[parent, young] <- round((pmin(plant[parent, pollinated], 1) * seeds), digits = 0); 
+      plant[parent, inds.seedlings] <- round((pmin(plant[parent, pollinated], 1) * plant_offspring), digits = 0); 
       
       
       # Then mark parent/reproducer as dead
       plant[parent, dead] <- 1;
     }
     
-    # Create vector of offspring numbers (necessary to remove 0s first? If so can add subset instruction for  plant[, young] != 0))
-    offspring <- as.vector(subset(plant[, young], plant[, young] != 0)); 
-    reproducers <- which(plant[, young] != 0);
+    # Create vector of offspring numbers (necessary to remove 0s first? If so can add subset instruction for  plant[, inds.seedlings] != 0))
+    offspring <- as.vector(subset(plant[, inds.seedlings], plant[, inds.seedlings] != 0)); 
+    reproducers <- which(plant[, inds.seedlings] != 0);
     
     # Create new array to populate with new plant information
     num_old_plant    <- dim(plant)[1]; # Number of rows in plant
@@ -799,7 +802,7 @@ plantreproduction <- function(plant, active, dead, pollinated, maturity, maturit
       new_plant[act_row, dead]      <- 0;
       new_plant[act_row, maturity]  <- 0;
       new_plant[act_row, emergence] <- 0;
-      new_plant[act_row, young]     <- 0;
+      new_plant[act_row, inds.seedlings]     <- 0;
       act_row                       <- act_row + 1; # Super important
     }
     
@@ -829,23 +832,23 @@ temp.change <- 0 # Temp change starts at 0 (as temperature changes parameters of
 
 #### Create initial species & population summary tables (frames to be added to with data pull from each season) ####  
 
-plantsummary <- plant %>% 
-  group_by(species) %>%
-  summarise(population = length(species),
+plantsummary <- plantinds %>% 
+  group_by(speciesid) %>%
+  summarise(population = length(speciesid),
             season = 0)
 
-pollsummary <- poll %>% 
-  group_by(species) %>%
-  summarise(population = length(species),
+pollsummary <- pollinds %>% 
+  group_by(speciesid) %>%
+  summarise(population = length(speciesid),
             season = 0)
 
 
-plantspeciesinfo <- plant %>% 
-  distinct(species, .keep_all = TRUE) %>% 
+plantspeciesinfo <- plantinds %>% 
+  distinct(speciesid, .keep_all = TRUE) %>% 
   mutate(season = 0)
 
-pollspeciesinfo <- poll %>% 
-  distinct(species, .keep_all = TRUE) %>% 
+pollspeciesinfo <- pollinds %>% 
+  distinct(speciesid, .keep_all = TRUE) %>% 
   mutate(season = 0)
 
 
@@ -855,7 +858,7 @@ while(season < 3){ # Run for an initial 20 seasons
   
   ## Calculate how much temperature has changed
   
-  temp.change <- 
+ 
   
   ## Set all individuals to 0 for activity (this will make dormant individuals from prior generations able to be picked up by functions)
   
@@ -870,15 +873,16 @@ while(season < 3){ # Run for an initial 20 seasons
   # Reset timestep and condition
   
   timestep <- 0
+  
   condition <- TRUE
   
   while(condition == TRUE){
     
-    if(length(poll[,1]) == 0) { ## A couple of stops in case all individuals die
+    if(length(pollinds[,1]) == 0) { ## A couple of stops in case all individuals die
       stop("All pollinators dead")
     }
     
-    if(length(plant[,1]) == 0) {
+    if(length(plantinds[,1]) == 0) {
       stop("All plants dead")
     }
     
@@ -891,7 +895,7 @@ while(season < 3){ # Run for an initial 20 seasons
     plantinds    <- plantinds[plantinds[, dead] == 0,]; # Remove dead plants (may happen as result of placement)
     pollinds     <- movement(inds = pollinds);
     pollinds     <- feeding(poll = pollinds, plant = plantinds);
-    plantinds    <- pollination(plant = plantinds, poll = pollinds);
+    plantinds    <- p.pollination(plant = plantinds, poll = pollinds);
     pollinds     <- pollinds[pollinds[, dead] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
     pollinds     <- pollmature(poll = pollinds);
     plantinds    <- plantmature(plant = plantinds);
@@ -922,29 +926,29 @@ while(season < 3){ # Run for an initial 20 seasons
   
   ##Create population summary information for plants and pollinators  
   
-  currentplantsummary <- plant %>% 
-    group_by(species) %>%
-    summarise(population = length(species),
+  currentplantsummary <- plantinds %>% 
+    group_by(speciesid) %>%
+    summarise(population = length(speciesid),
               season = season)
   
   plantsummary <- bind_rows(plantsummary, currentplantsummary)
   
   
-  currentpollsummary <- poll %>% 
-    group_by(species) %>%
-    summarise(population = length(species),
+  currentpollsummary <- pollinds %>% 
+    group_by(speciesid) %>%
+    summarise(population = length(speciesid),
               season = season)
   
   pollsummary <- bind_rows(pollsummary, currentpollsummary)  
   
   ## Create species info summary for plants and pollinators 
   
-  currentplantspeciesinfo <- plant %>% 
-    distinct(species, .keep_all = TRUE) %>% 
+  currentplantspeciesinfo <- plantinds %>% 
+    distinct(speciesid, .keep_all = TRUE) %>% 
     mutate(season = season)
   
-  currentpollspeciesinfo <- poll %>% 
-    distinct(species, .keep_all = TRUE) %>% 
+  currentpollspeciesinfo <- pollinds %>% 
+    distinct(speciesid, .keep_all = TRUE) %>% 
     mutate(season = season)
   
   
