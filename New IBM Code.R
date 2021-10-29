@@ -592,6 +592,12 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
 # 5. If no, or if no flowers at x/y loc, then uptick hunger counter
 
 feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = speciesid, f.active = active, f.ncol = total_inds_cols){
+  ##############################################################################
+  ## BD: Here's a trick to try to do this efficiency with minimual disruption
+  max_xloc  <- max(poll[, f.x_loc]); # BD: Get the maximum x location
+  max_yloc  <- max(poll[, f.y_loc]); # BD: Get the maximum y location
+  count_fed <- matrix(data = 0, nrow = max_yloc, ncol = max_xloc);  
+  ##############################################################################
   for(p in 1:length(poll[,1])){      
     xloc   <- poll[p, f.x_loc]; # Get poll locations
     yloc   <- poll[p, f.y_loc];
@@ -601,7 +607,19 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
         flowerinds <- which( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Get the flower individual at that location 
         f.speciesref <- plant[flowerinds, f.species] # Extract the f.species number of that flower 
         if(poll[p, (f.ncol+f.speciesref)[1]] == 1){ # Check that this flower f.species is one which pollinator interacts with  
-          poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
+          ######################################################################
+          ## BD: As far as I can tell, this is the only 'if' causing feeding?
+          count_fed[xloc, yloc] <- count_fed[xloc, yloc] + 1; # Increase count
+          ## The new 'if' below checks the count location. If more than 10 have
+          ## fed, then the pollinator gets blocked from doing anything now
+          ## I think that you will probably need an 'else' here to increase
+          ## hunger if it goes unfed? Also, you will want to replace the 10 hard
+          ## coded with a variable that goes in the feeding function
+          ## The variable will specify the maximum number of pollinating feeders
+          if(count_fed[xloc, yloc] <= 10){
+          ######################################################################  
+              poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
+          }
         } else {
           poll[p, f.hunger] <- poll[p, f.hunger] + 1 # If poll can't interact with flower then uptick f.hunger
         }}else {
