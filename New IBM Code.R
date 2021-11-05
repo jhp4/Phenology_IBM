@@ -11,17 +11,17 @@ library("tidyverse")
 
 # Number of pollinator species to create 
 
-poll_species_number <- 30
+poll_species_number <- 20
 
 # Number of plant species to create 
 
-plant_species_number <- 30
+plant_species_number <- 20
 
 # Number of individuals of each species to create
 
-poll_individuals <- 50
+poll_individuals <- 150
 
-plant_individuals <- 50
+plant_individuals <- 150
 
 # Midpoint range - this defines the maximum and minimum values from which the midpoint parameter for each species will be drawn. The midpoint parameter feeds into the logistic curve equation which describes the phenology of a species. Broadly speaking the midpoint will determine the point in the logistic curve (in Julian days) when the rate of increase of the event is at its highest, although there is some interaction with other parameters in the model (notably scale) that can alter this. Therefore is roughly equivalent to the half-way point of the phenology event and is the Julian date at which species individuals are most likely to emerge.
 
@@ -64,8 +64,8 @@ min_scale_sensitivity <- -0.02
 
 # Only pollinator species use efficacy range
 
-max_efficacy <- 0.5
-min_efficacy <- 1
+max_efficacy <- 0.05
+min_efficacy <- 0.01
 
 ## Generalism likelihood - this determines whether a plant or insect species is generalist or specialist. Depending on this, number of interaction partners are drawn from one of two Poisson distributions with lamda set to either higher or lower value
 
@@ -158,8 +158,8 @@ total_inds_cols <- species_cols + inds_cols -1
 
 # X and Y limits for landscape (currently set at 70*70 for a landscape of 4900 cells for starting population of 3,000)
 
-xmax <- 10
-ymax <- 10
+xmax <- 50
+ymax <- 50
 
 # Dispersal distance in cells for pollinator offspring from parent start location
 
@@ -167,7 +167,7 @@ poll_dispersal <- 2
 
  # Dispersal distance in cells for plant offspring from parent start location  
 
-plant_dispersal <- 2
+plant_dispersal <- 10
 
 # Movement distance for pollinator individuals. Movement distance is not fixed - rather, poll_movement sets the sample range from which movement distance will be sampled at each timestep (movement = sample(-poll_movement:poll_movement))
 
@@ -175,16 +175,19 @@ poll_movement <- 3
 
 # Hunger threshold of pollinators. Used in both pollinator feeding and maturity functions. Each timestep active pollinators are checked against this - if they can feed, it reverts to 0. If they can't feed, hunger column gets upticked. If it exceeds threshold, individual dies. Currently constant for all species/individuals 
 
-poll_hunger <- 15
+poll_hunger <- 10
 
+# Maximum number of pollinators that can feed from the same flower in one timestep
+
+pollfeeders <- 1
 
 # Number of offspring produced by pollinators once sexual maturity reached, used in pollinator reproduction function 
 
-poll_offspring <- 3 
+poll_offspring <- 2
 
 # Number of seeds produced by each flower once fully pollinated or lifespan reached
 
-plant_offspring <- 3
+plant_offspring <- 6
 
 
 #### Pollinator species creation function ####
@@ -482,9 +485,9 @@ placementpoll <- function(poll, p.xmax = xmax, p.ymax = ymax, p.active = active,
   for(i in 1:length(poll[, p.active])){
     if(poll[i, p.active] == 0){ # Check for what p.season it is - if 1 then just place on landscape
       if( p.season == 0){
-        poll[i, p.x_loc]<-sample(x = 0:p.xmax, size = 1, replace = TRUE);
-        poll[i, p.y_loc]<-sample(x = 0:p.ymax, size = 1, replace = TRUE);
-      } else # If p.season >1 then disperse according to parent's last coordinates
+        poll[i, p.x_loc]<-sample(x = 1:p.xmax, size = 1, replace = TRUE);
+        poll[i, p.y_loc]<-sample(x = 1:p.ymax, size = 1, replace = TRUE);
+      } else # If p.season >0 then disperse according to parent's last coordinates
         poll[i, p.x_loc]<-poll[i, p.x_loc] + sample(x = -(p.poll_dispersal):p.poll_dispersal, size = 1);
       poll[i, p.y_loc]<-poll[i, p.y_loc] + sample(x = -(p.poll_dispersal):p.poll_dispersal, size = 1);
     }}
@@ -495,10 +498,10 @@ placementpoll <- function(poll, p.xmax = xmax, p.ymax = ymax, p.active = active,
     poll[i,p.y_loc] <- poll[i,p.y_loc] - p.ymax;
   }
   # Same for other edges 
-  if(poll[i, p.x_loc] < 0){
+  if(poll[i, p.x_loc] < 1){
     poll[i, p.x_loc] <- poll[i, p.x_loc] + p.xmax;
   }
-  if(poll[i, p.y_loc] < 0){
+  if(poll[i, p.y_loc] < 1){
     poll[i, p.y_loc] <- poll[i, p.y_loc] + p.ymax;
   }
   return(poll)
@@ -512,8 +515,8 @@ placementplant <- function(plant, p.xmax = xmax, p.ymax = ymax, p.active = activ
   for(i in 1:length(plant[,p.active])){
     if(plant[i, p.active] == 0){
       if( p.season == 0){
-        plant[i, p.x_loc]<-sample(x = 0:p.xmax, size = 1, replace = TRUE);
-        plant[i, p.y_loc]<-sample(x = 0:p.ymax, size = 1, replace = TRUE);
+        plant[i, p.x_loc]<-sample(x = 1:p.xmax, size = 1, replace = TRUE);
+        plant[i, p.y_loc]<-sample(x = 1:p.ymax, size = 1, replace = TRUE);
       } else
         plant[i, p.x_loc] <- plant[i, p.x_loc] + sample(x = -p.plant_dispersal:p.plant_dispersal, size = 1, replace = TRUE);
       plant[i, p.y_loc] <- plant[i, p.y_loc] + sample(x = -p.plant_dispersal:p.plant_dispersal, size = 1, replace = TRUE);
@@ -524,10 +527,10 @@ placementplant <- function(plant, p.xmax = xmax, p.ymax = ymax, p.active = activ
         plant[i,p.y_loc] <- plant[i,p.y_loc] - p.ymax;
       }
       # Same for other edges 
-      if(plant[i, p.x_loc] < 0){
+      if(plant[i, p.x_loc] < 1){
         plant[i, p.x_loc] <- plant[i, p.x_loc] + p.xmax;
       }
-      if(plant[i, p.y_loc] < 0){
+      if(plant[i, p.y_loc] < 1){
         plant[i, p.y_loc] <- plant[i, p.y_loc] + p.ymax;
       }
       on_cell <- sum(plant[, p.x_loc] == plant[i, p.x_loc] & plant[, p.y_loc] == plant[i, p.y_loc] & (plant[, p.active] == 1 | plant[,p.active] == 2)); # Check whether any other inds at plant emergence location
@@ -572,10 +575,10 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
       inds[i,m.y_loc] <- inds[i,m.y_loc] - m.ymax;
     }
     # Do you not need something like the below for the other edges?
-    if(inds[i, m.x_loc] < 0){
+    if(inds[i, m.x_loc] < 1){
       inds[i, m.x_loc] <- inds[i, m.x_loc] + m.xmax;
     }
-    if(inds[i, m.y_loc] < 0){
+    if(inds[i, m.y_loc] < 1){
       inds[i, m.y_loc] <- inds[i, m.y_loc] + m.ymax;
     }
   }
@@ -592,13 +595,14 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
 # 5. If no, or if no flowers at x/y loc, then uptick hunger counter
 
 feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = speciesid, f.active = active, f.ncol = total_inds_cols){
-  ##############################################################################
-  ## BD: Here's a trick to try to do this efficiency with minimual disruption
-  max_xloc  <- max(poll[, f.x_loc]); # BD: Get the maximum x location
-  max_yloc  <- max(poll[, f.y_loc]); # BD: Get the maximum y location
-  count_fed <- matrix(data = 0, nrow = max_yloc, ncol = max_xloc);  
-  ##############################################################################
-  for(p in 1:length(poll[,1])){      
+ 
+   ## BD: Here's a trick to try to do this efficiency with minimual disruption
+  count_fed <- matrix(data = 0, nrow = ymax, ncol = xmax); 
+  
+  ## Insert this to scramble order in which loop processes pollinator inds (so that feeding preference isn't given to first lines of inds array)
+  scrambled_polls <- sample(x = 1:length(poll[,1]), size = length(poll[,1]),
+                            replace = FALSE);
+  for(p in scrambled_polls){      
     xloc   <- poll[p, f.x_loc]; # Get poll locations
     yloc   <- poll[p, f.y_loc];
     flowers <- sum( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Total of flowers at that location
@@ -607,8 +611,7 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
         flowerinds <- which( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Get the flower individual at that location 
         f.speciesref <- plant[flowerinds, f.species] # Extract the f.species number of that flower 
         if(poll[p, (f.ncol+f.speciesref)[1]] == 1){ # Check that this flower f.species is one which pollinator interacts with  
-          ######################################################################
-          ## BD: As far as I can tell, this is the only 'if' causing feeding?
+          
           count_fed[xloc, yloc] <- count_fed[xloc, yloc] + 1; # Increase count
           ## The new 'if' below checks the count location. If more than 10 have
           ## fed, then the pollinator gets blocked from doing anything now
@@ -616,13 +619,11 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
           ## hunger if it goes unfed? Also, you will want to replace the 10 hard
           ## coded with a variable that goes in the feeding function
           ## The variable will specify the maximum number of pollinating feeders
-          if(count_fed[xloc, yloc] <= 10){
-          ######################################################################  
-              poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
-          }
+          if(count_fed[xloc, yloc] <= -1){
+           poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
         } else {
           poll[p, f.hunger] <- poll[p, f.hunger] + 1 # If poll can't interact with flower then uptick f.hunger
-        }}else {
+        }}}else {
           poll[p, f.hunger] <- poll[p, f.hunger] + 1 # If flower not at location uptick f.hunger
         }
     } else {
@@ -859,7 +860,7 @@ plantreproduction <- function(plant){
 
 condition <- TRUE
 
-season <- 1 # Season starts at 1
+season <- 0 # Season starts at 1
 
 temp.change <- 0 # Temp change starts at 0 (as temperature changes parameters of binomial model that defines emergence will be redefined)
 
@@ -891,7 +892,8 @@ season <- 0
 
 start_time <- Sys.time()
 
-while(season < 4){ # Run for an initial 20 seasons 
+
+while(season < 5){ # Run for an initial 20 seasons 
   
   ## Calculate how much temperature has changed
   
@@ -906,6 +908,46 @@ while(season < 4){ # Run for an initial 20 seasons
    
   pollinds <- emergence.function(inds = pollinds)
   plantinds <- emergence.function(inds = plantinds)
+  
+  ## Place individuals
+  
+  pollinds     <- placementpoll(poll = pollinds);
+  plantinds    <- placementplant(plant = plantinds);
+  plantinds    <- competitionplant(plant = plantinds);
+  plantinds    <- plantinds[plantinds[, dead] == 0,]; # Remove all plants killed by landscape competition
+  
+  #### Collect data BEFORE reproduction takes place ####
+  
+  ##Create population summary information for plants and pollinators  
+  
+  currentplantsummary <- plantinds %>% 
+    group_by(speciesid) %>%
+    summarise(population = length(speciesid),
+              season = season)
+  
+  plantsummary <- bind_rows(plantsummary, currentplantsummary)
+  
+  
+  currentpollsummary <- pollinds %>% 
+    group_by(speciesid) %>%
+    summarise(population = length(speciesid),
+              season = season)
+  
+  pollsummary <- bind_rows(pollsummary, currentpollsummary)  
+  
+  ## Create species info summary for plants and pollinators 
+  
+  currentplantspeciesinfo <- plantinds %>% 
+    distinct(speciesid, .keep_all = TRUE) %>% 
+    mutate(season = season)
+  
+  currentpollspeciesinfo <- pollinds %>% 
+    distinct(speciesid, .keep_all = TRUE) %>% 
+    mutate(season = season)
+  
+  
+  pollspeciesinfo <- bind_rows(pollspeciesinfo, currentpollspeciesinfo)
+  plantspeciesinfo <- bind_rows(plantspeciesinfo, currentplantspeciesinfo)
     
   # Reset timestep and condition
   
@@ -925,43 +967,8 @@ while(season < 4){ # Run for an initial 20 seasons
     
     startloop <- Sys.time()
     
-    pollinds     <- placementpoll(poll = pollinds);
-    plantinds    <- placementplant(plant = plantinds);
-    plantinds    <- competitionplant(plant = plantinds);
-    plantinds    <- plantinds[plantinds[, dead] == 0,]; # Remove all plants killed by landscape competition
-    
-    #### Collect data BEFORE reproduction takes place ####
-    
-    ##Create population summary information for plants and pollinators  
-    
-    currentplantsummary <- plantinds %>% 
-      group_by(speciesid) %>%
-      summarise(population = length(speciesid),
-                season = season)
-    
-    plantsummary <- bind_rows(plantsummary, currentplantsummary)
     
     
-    currentpollsummary <- pollinds %>% 
-      group_by(speciesid) %>%
-      summarise(population = length(speciesid),
-                season = season)
-    
-    pollsummary <- bind_rows(pollsummary, currentpollsummary)  
-    
-    ## Create species info summary for plants and pollinators 
-    
-    currentplantspeciesinfo <- plantinds %>% 
-      distinct(speciesid, .keep_all = TRUE) %>% 
-      mutate(season = season)
-    
-    currentpollspeciesinfo <- pollinds %>% 
-      distinct(speciesid, .keep_all = TRUE) %>% 
-      mutate(season = season)
-    
-    
-    pollspeciesinfo <- bind_rows(pollspeciesinfo, currentpollspeciesinfo)
-    plantspeciesinfo <- bind_rows(plantspeciesinfo, currentplantspeciesinfo)
     
     #### Continue loop ####
     
@@ -1008,5 +1015,8 @@ end_time <- Sys.time()
 
 end_time-start_time
 
+length(unique(plantinds$speciesid))
+length(unique(pollinds$speciesid))
 
-plot(plantinds$species, plantinds$emergence)
+write.csv(pollsummary,"pollsummary6.csv", row.names = FALSE)
+write.csv(plantsummary,"plantsummary6.csv", row.names = FALSE)
