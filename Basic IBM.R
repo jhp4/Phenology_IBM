@@ -161,12 +161,12 @@ plant[,8]<-emergence(plant)
 activation<- function(inds, active = 2, emergence = 8){
   for(i in 1:dim(inds)[1]){ 
     if(inds[i, active] != 3){
-  if(inds[i, emergence] == timestep){         # If timestep is equal to emergence
-    inds[i, active] <- 1;    # Make individual active ('active' column = 1)
-  }
-  if(inds[i, emergence] < timestep){         # If timestep is greater than emergence
-      inds[i, active] <- 2;    # Make individual active but not placed ('active' column = 2) 
-    }
+      if(inds[i, emergence] == timestep){         # If timestep is equal to emergence
+        inds[i, active] <- 1;    # Make individual active ('active' column = 1)
+      }
+      if(inds[i, emergence] < timestep){         # If timestep is greater than emergence
+        inds[i, active] <- 2;    # Make individual active but not placed ('active' column = 2) 
+      }
     }}
   return(inds)}
 
@@ -354,7 +354,7 @@ pollreproduction <- function(poll, species = 1, active = 2, dead = 3, hunger = 4
     poll[reproducers, dead] <- 1; # This should stick a 1 in the third column
   }                               # For all reproducers (if there are any)
   
-
+  
   if(length(reproducers) > 0){ # BD No need to do any of this if not.
     # BD: Here's an attempt to avoid the rbind below
     num_old_poll    <- dim(poll)[1]; # Number of rows in poll
@@ -526,50 +526,50 @@ pollspeciesinfo <- poll %>%
 
 while(season < 3){
   
-## Set all individuals to 0 for activity (this will make dormant individuals from prior generations able to be picked up by functions)
-## Reset timestep & conidtion 
+  ## Set all individuals to 0 for activity (this will make dormant individuals from prior generations able to be picked up by functions)
+  ## Reset timestep & conidtion 
   
   poll[,2] <- 0
   plant[,2] <- 0
   timestep <- 0
   condition <- TRUE
-
-while(condition == TRUE){
   
-  if(length(poll[,1]) == 0) {
-    stop("All pollinators dead")
+  while(condition == TRUE){
+    
+    if(length(poll[,1]) == 0) {
+      stop("All pollinators dead")
+    }
+    
+    if(length(plant[,1]) ==0) {
+      stop("All plants dead")
+    }
+    
+    poll     <- activation(poll);
+    plant    <- activation(plant);
+    poll     <- placementpoll(poll);
+    plant    <- placementplant(plant);
+    plant    <- plant[plant[, 3] == 0,]; # Remove dead plants (may happen as result of placement)
+    poll     <- movement(poll);
+    poll     <- feeding(poll = poll, plant = plant);
+    plant    <- pollination(plant = plant, poll = poll);
+    poll     <- poll[poll[, 3] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
+    poll     <- pollmature(poll = poll);
+    plant    <- plantmature(plant = plant);
+    poll     <- pollreproduction(poll = poll);
+    plant    <- plantreproduction(plant = plant);
+    poll     <- poll[poll[, 3] == 0,]
+    plant    <- plant[plant[, 3] == 0,];
+    timestep <- timestep +1
+    
+    plant.living <- length(which(plant[,2] == 1 | plant[,2] == 2 | plant[,2] == 0));
+    poll.living <- length(which(poll[,2] == 1 | poll[,2] == 2 | poll[,2] == 0));
+    inds.living <- sum(plant.living + poll.living);
+    if (inds.living <= 0){ 
+      condition <- FALSE
+    }
+    
   }
   
-  if(length(plant[,1]) ==0) {
-    stop("All plants dead")
-  }
-  
-  poll     <- activation(poll);
-  plant    <- activation(plant);
-  poll     <- placementpoll(poll);
-  plant    <- placementplant(plant);
-  plant    <- plant[plant[, 3] == 0,]; # Remove dead plants (may happen as result of placement)
-  poll     <- movement(poll);
-  poll     <- feeding(poll = poll, plant = plant);
-  plant    <- pollination(plant = plant, poll = poll);
-  poll     <- poll[poll[, 3] == 0,]; # Some pollinators will have died as a result of feeding function so need to remove BEFORE reproducing
-  poll     <- pollmature(poll = poll);
-  plant    <- plantmature(plant = plant);
-  poll     <- pollreproduction(poll = poll);
-  plant    <- plantreproduction(plant = plant);
-  poll     <- poll[poll[, 3] == 0,]
-  plant    <- plant[plant[, 3] == 0,];
-  timestep <- timestep +1
-  
-  plant.living <- length(which(plant[,2] == 1 | plant[,2] == 2 | plant[,2] == 0));
-  poll.living <- length(which(poll[,2] == 1 | poll[,2] == 2 | poll[,2] == 0));
-  inds.living <- sum(plant.living + poll.living);
-  if (inds.living <= 0){ 
-    condition <- FALSE
-  }
-  
-}
-
   ## Create population summary information for plants and pollinators  
   
   currentplantsummary <- plant %>% 
@@ -588,7 +588,7 @@ while(condition == TRUE){
   pollsummary <- bind_rows(pollsummary, currentpollsummary)  
   
   ## Create species info summary for plants and pollinators 
-
+  
   currentplantspeciesinfo <- plant %>% 
     distinct(species, .keep_all = TRUE) %>% 
     mutate(season = season)
@@ -600,10 +600,9 @@ while(condition == TRUE){
   
   pollspeciesinfo <- bind_rows(pollspeciesinfo, currentpollspeciesinfo)
   plantspeciesinfo <- bind_rows(plantspeciesinfo, currentplantspeciesinfo)
-
-## uptick season count 
-    
-season <- season + 1
-
-}
   
+  ## uptick season count 
+  
+  season <- season + 1
+  
+}
