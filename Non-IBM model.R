@@ -70,3 +70,4 @@ flight.times <- do.call(rbind,flight.times)
 # and combine that data frame with the pollinator characteristics
 insects <- cbind(insects,flight.times)
 
+Test edit for Github
