@@ -888,7 +888,7 @@ season <- 0
 start_time <- Sys.time()
 
 
-while(season < 31){ # Run for an initial 30 seasons 
+while(season < 21){ # Run for an initial 30 seasons 
   
   ## Calculate how much temperature has changed
   
