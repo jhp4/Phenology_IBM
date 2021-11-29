@@ -6,9 +6,9 @@ rm(list = ls())
 
 library("tidyverse")
 
-seed.reference <- 1
+seed.reference <- 11
 
-set.seed(1)
+set.seed(11)
 
 #### Set global parameters (as part of start-up outside model run) ####
 
@@ -1100,11 +1100,11 @@ pollspeciesinfo$run <- seed.reference
 plantspeciesinfo$run <- seed.reference
 
 
-write.csv(pollsummary,"pollsummary1.csv", row.names = FALSE)
-write.csv(plantsummary,"plantsummary1.csv", row.names = FALSE)
-write.csv(pollspeciesinfo, "pollspeciesinfo1.csv", row.names = FALSE)
-write.csv(plantspeciesinfo, "plantspeciesinfo1.csv", row.names = FALSE)
-write.csv(temp.summary, "tempsummary1.csv", row.names = FALSE)
+write.csv(pollsummary,"pollsummary11.csv", row.names = FALSE)
+write.csv(plantsummary,"plantsummary11.csv", row.names = FALSE)
+write.csv(pollspeciesinfo, "pollspeciesinfo11.csv", row.names = FALSE)
+write.csv(plantspeciesinfo, "plantspeciesinfo11.csv", row.names = FALSE)
+write.csv(temp.summary, "tempsummary11.csv", row.names = FALSE)
 
 
 
