@@ -79,7 +79,7 @@ min_skew_sensitivity <- -0.01
 
 # Only pollinator species use efficacy range
 
-max_efficacy <- 0.05
+max_efficacy <- 0.1
 min_efficacy <- 0.01
 
 ## Generalism likelihood - this determines whether a plant or insect species is generalist or specialist. Depending on this, number of interaction partners are drawn from one of two Poisson distributions with lamda set to either higher or lower value
@@ -100,7 +100,7 @@ poll_lifespan <- 35
 
 # Plant lifespan - this determines the lambda value for the Poisson distribution from which plant species blooming period will be drawn (in days)
 
-plant_lifespan <- 20  
+plant_lifespan <- 30
 
 # Names of columns in pollinator species array (should be all traits that are species-specific. Currently 11 columns - species number, number of interaction partners, phenological model parameters (midpoint, scale, skew), parameter sensitivity (midpoint/scale), pollinator efficacy, generalist)
 
@@ -180,19 +180,19 @@ ymax <- 50
 
 # Dispersal distance in cells for pollinator offspring from parent start location
 
-poll_dispersal <- 2
+poll_dispersal <- 4
 
  # Dispersal distance in cells for plant offspring from parent start location  
 
-plant_dispersal <- 10
+plant_dispersal <- 15
 
 # Movement distance for pollinator individuals. Movement distance is not fixed - rather, poll_movement sets the sample range from which movement distance will be sampled at each timestep (movement = sample(-poll_movement:poll_movement))
 
-poll_movement <- 3
+poll_movement <- 5
 
 # Hunger threshold of pollinators. Used in both pollinator feeding and maturity functions. Each timestep active pollinators are checked against this - if they can feed, it reverts to 0. If they can't feed, hunger column gets upticked. If it exceeds threshold, individual dies. Currently constant for all species/individuals 
 
-poll_hunger <- 10
+poll_hunger <- 12
 
 # Maximum number of pollinators that can feed from the same flower in one timestep
 
@@ -676,7 +676,7 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
 # 4. If yes then increases 'pollination' measure by efficacy of visiting pollinators  
 # 5. If no then nothing happens (could add maturity uptick here but might be best saving to next step)
 
-p.pollination <- function(plant, poll, p.x_loc = x_loc, p.y_loc = y_loc, p.efficacy = efficacy, p.pollination = pollinated, p.dead = dead, p.species = speciesid, p.active = active, ncol = total_inds_cols){
+p.pollination <- function(plant, poll, p.x_loc = x_loc, p.y_loc = y_loc, p.efficacy = inds.efficacy, p.pollination = pollinated, p.dead = dead, p.species = speciesid, p.active = active, ncol = total_inds_cols){
   for(p in 1:length(plant[,1])){      
     xloc   <- plant[p, p.x_loc]; # Get plant locations
     yloc   <- plant[p, p.y_loc];
@@ -819,7 +819,6 @@ pollreproduction <- function(poll, pr.active = active, pr.dead = dead, pr.hunger
 ## Offspring are currently identical to their parents. Could add variance to this but phenological traits and emergence will be adjusted and recalculated in new season anyway
 
 
-
 plantreproduction <- function(plant){
   
   # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
@@ -834,7 +833,7 @@ plantreproduction <- function(plant){
       parent <- reproducers[i];
       
       # Young calculated by taking lower of pollinated proportion or 1, multiplying it by seeds variable and rounding to nearest whole number 
-      plant[parent, inds.seedlings] <- round((pmin(plant[parent, pollinated], 1) * plant_offspring), digits = 0); 
+      plant[parent, inds.seedlings] <- pmax(1, (round((pmin(plant[parent, pollinated], 1) * plant_offspring), digits = 0))); 
       
       # Then mark parent/reproducer as dead
       plant[parent, dead] <- 1;
@@ -934,15 +933,16 @@ temp.summary[, 4] <- seed.reference
 #### Run IBM loop #### 
 
 season <- 0
+annual.temp.change <- 0
 
 start_time <- Sys.time()
 
 
-while(season < 66){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50 to apply phenology shifts) 
+while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50 to apply phenology shifts) 
   
   ## Generate annual temperature change and track temperature data 
   
-  if(season >15){
+  if(season >21){
     annual.temp.change <- rnorm(1, mean= mean.annual.increase, sd = sd.annual.increase);
     temp.summary[(season-15), 1] <- season;
     temp.summary[(season-15), 2] <- annual.temp.change;
@@ -1100,11 +1100,11 @@ pollspeciesinfo$run <- seed.reference
 plantspeciesinfo$run <- seed.reference
 
 
-write.csv(pollsummary,"pollsummary12.csv", row.names = FALSE)
-write.csv(plantsummary,"plantsummary12.csv", row.names = FALSE)
-write.csv(pollspeciesinfo, "pollspeciesinfo12.csv", row.names = FALSE)
-write.csv(plantspeciesinfo, "plantspeciesinfo12.csv", row.names = FALSE)
-write.csv(temp.summary, "tempsummary12.csv", row.names = FALSE)
+write.csv(pollsummary,"pollsummary13.csv", row.names = FALSE)
+write.csv(plantsummary,"plantsummary13.csv", row.names = FALSE)
+write.csv(pollspeciesinfo, "pollspeciesinfo13.csv", row.names = FALSE)
+write.csv(plantspeciesinfo, "plantspeciesinfo13.csv", row.names = FALSE)
+write.csv(temp.summary, "tempsummary13.csv", row.names = FALSE)
 
 
 
