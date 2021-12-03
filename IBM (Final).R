@@ -6,9 +6,9 @@ rm(list = ls())
 
 library("tidyverse")
 
-seed.reference <- 11
+seed.reference <- 1
 
-set.seed(11)
+set.seed(1)
 
 #### Set global parameters (as part of start-up outside model run) ####
 
@@ -59,7 +59,7 @@ min_skew <- 1
 
 poll_midpoint_sensitivity_mean <- -3.729871
 poll_midpoint_sensitivity_sd <- 6.856
-
+  
 plant_midpoint_sensitivity_mean <- -4
 plant_midpoint_sensitivity_sd <- 4
 
@@ -182,7 +182,7 @@ ymax <- 50
 
 poll_dispersal <- 4
 
-# Dispersal distance in cells for plant offspring from parent start location  
+ # Dispersal distance in cells for plant offspring from parent start location  
 
 plant_dispersal <- 15
 
@@ -243,7 +243,7 @@ make_poll_species<- function(poll_species_number    ,
                              generalism_likelihood,
                              poll_lifespan
                              
-                             
+                          
 ){
   poll_species <- array(data=0, dim=c(poll_species_number,(species_cols + plant_species_number)));
   colnames(poll_species) <- pollspeciesnames;
@@ -268,25 +268,25 @@ make_poll_species<- function(poll_species_number    ,
 #### Create list of poll species and trait values using make_poll_species function (as part of start-up outside model run) ####
 
 pollspeciestraits <- make_poll_species( poll_species_number = poll_species_number    , 
-                                        plant_species_number = plant_species_number   , 
-                                        species_cols = species_cols ,
-                                        pollspeciesnames = pollspeciesnames  ,
-                                        max_midpoint = max_midpoint       , 
-                                        min_midpoint = min_midpoint       ,
-                                        max_scale = max_scale          ,
-                                        min_scale = min_scale          ,
-                                        max_efficacy = max_efficacy       ,
-                                        min_efficacy = min_efficacy       ,
-                                        min_skew = min_skew           ,
-                                        max_skew = max_skew           ,
-                                        poll_midpoint_sensitivity_mean = poll_midpoint_sensitivity_mean,
-                                        poll_midpoint_sensitivity_sd = poll_midpoint_sensitivity_sd ,
-                                        min_scale_sensitivity = min_scale_sensitivity    ,
-                                        max_scale_sensitivity = max_scale_sensitivity    ,
-                                        min_skew_sensitivity = min_skew_sensitivity    ,
-                                        max_skew_sensitivity = max_skew_sensitivity    ,
-                                        generalism_likelihood = generalism_likelihood,
-                                        poll_lifespan = poll_lifespan)
+                   plant_species_number = plant_species_number   , 
+                   species_cols = species_cols ,
+                   pollspeciesnames = pollspeciesnames  ,
+                   max_midpoint = max_midpoint       , 
+                   min_midpoint = min_midpoint       ,
+                   max_scale = max_scale          ,
+                   min_scale = min_scale          ,
+                   max_efficacy = max_efficacy       ,
+                   min_efficacy = min_efficacy       ,
+                   min_skew = min_skew           ,
+                   max_skew = max_skew           ,
+                   poll_midpoint_sensitivity_mean = poll_midpoint_sensitivity_mean,
+                   poll_midpoint_sensitivity_sd = poll_midpoint_sensitivity_sd ,
+                   min_scale_sensitivity = min_scale_sensitivity    ,
+                   max_scale_sensitivity = max_scale_sensitivity    ,
+                   min_skew_sensitivity = min_skew_sensitivity    ,
+                   max_skew_sensitivity = max_skew_sensitivity    ,
+                   generalism_likelihood = generalism_likelihood,
+                   poll_lifespan = poll_lifespan)
 
 ##### Plant species creation function ####
 
@@ -296,25 +296,25 @@ pollspeciestraits <- make_poll_species( poll_species_number = poll_species_numbe
 
 
 make_plant_species<- function(plant_species_number    , 
-                              poll_species_number   , 
-                              species_cols       ,
-                              plantspeciesnames   ,
-                              max_midpoint       , 
-                              min_midpoint       ,
-                              max_scale          ,
-                              min_scale          ,
-                              min_skew           ,
-                              max_skew           ,
-                              plant_midpoint_sensitivity_mean ,
-                              plant_midpoint_sensitivity_sd ,
-                              min_skew_sensitivity,
-                              max_skew_sensitivity,
-                              min_scale_sensitivity    ,
-                              max_scale_sensitivity    ,
-                              generalism_likelihood,
-                              plant_lifespan
-                              
-                              
+                             poll_species_number   , 
+                             species_cols       ,
+                             plantspeciesnames   ,
+                             max_midpoint       , 
+                             min_midpoint       ,
+                             max_scale          ,
+                             min_scale          ,
+                             min_skew           ,
+                             max_skew           ,
+                             plant_midpoint_sensitivity_mean ,
+                             plant_midpoint_sensitivity_sd ,
+                             min_skew_sensitivity,
+                             max_skew_sensitivity,
+                             min_scale_sensitivity    ,
+                             max_scale_sensitivity    ,
+                             generalism_likelihood,
+                             plant_lifespan
+                             
+                             
 ){
   plant_species <- array(data=0, dim=c(plant_species_number,(species_cols + poll_species_number)));
   colnames(plant_species) <- plantspeciesnames;
@@ -337,23 +337,23 @@ make_plant_species<- function(plant_species_number    ,
 #### Create list of plant species and trait values using make_plant_species function (as part of start-up outside model run) ####
 
 plantspeciestraits <- make_plant_species( poll_species_number = poll_species_number    , 
-                                          plant_species_number = plant_species_number   , 
-                                          species_cols = species_cols ,
-                                          plantspeciesnames = plantspeciesnames  ,
-                                          max_midpoint = max_midpoint       , 
-                                          min_midpoint = min_midpoint       ,
-                                          max_scale = max_scale          ,
-                                          min_scale = min_scale          ,
-                                          min_skew = min_skew           ,
-                                          max_skew = max_skew           ,
-                                          plant_midpoint_sensitivity_mean = plant_midpoint_sensitivity_mean,
-                                          plant_midpoint_sensitivity_sd = plant_midpoint_sensitivity_sd ,
-                                          min_scale_sensitivity = min_scale_sensitivity    ,
-                                          max_scale_sensitivity = max_scale_sensitivity    ,
-                                          min_skew_sensitivity = min_skew_sensitivity    ,
-                                          max_skew_sensitivity = max_skew_sensitivity    ,
-                                          generalism_likelihood = generalism_likelihood,
-                                          plant_lifespan = plant_lifespan)
+                                        plant_species_number = plant_species_number   , 
+                                        species_cols = species_cols ,
+                                        plantspeciesnames = plantspeciesnames  ,
+                                        max_midpoint = max_midpoint       , 
+                                        min_midpoint = min_midpoint       ,
+                                        max_scale = max_scale          ,
+                                        min_scale = min_scale          ,
+                                        min_skew = min_skew           ,
+                                        max_skew = max_skew           ,
+                                        plant_midpoint_sensitivity_mean = plant_midpoint_sensitivity_mean,
+                                        plant_midpoint_sensitivity_sd = plant_midpoint_sensitivity_sd ,
+                                        min_scale_sensitivity = min_scale_sensitivity    ,
+                                        max_scale_sensitivity = max_scale_sensitivity    ,
+                                        min_skew_sensitivity = min_skew_sensitivity    ,
+                                        max_skew_sensitivity = max_skew_sensitivity    ,
+                                        generalism_likelihood = generalism_likelihood,
+                                        plant_lifespan = plant_lifespan)
 
 
 
@@ -365,11 +365,11 @@ plantspeciestraits <- make_plant_species( poll_species_number = poll_species_num
 
 interaction_count <- function(species, interactions, generalism, generalist.lambda, specialist.lambda){
   for(i in 1:length(species[,1])){
-    if (species[i, generalism] == 1){
-      species[i, interactions] <- rpois(1, lambda = generalist.lambda)
-    }
+  if (species[i, generalism] == 1){
+    species[i, interactions] <- rpois(1, lambda = generalist.lambda)
+  }
     else{
-      species[i, interactions] <- rpois(1, lambda = specialist.lambda)
+    species[i, interactions] <- rpois(1, lambda = specialist.lambda)
     }
   }
   return(species)}
@@ -394,10 +394,10 @@ pollspeciestraits[,interactions][pollspeciestraits[,interactions]>plant_species_
 # Apply to plants
 
 plantspeciestraits <- interaction_count(species = plantspeciestraits,
-                                        interactions = interactions,
-                                        generalism = generalism,
-                                        generalist.lambda = generalist.lambda,
-                                        specialist.lambda = specialist.lambda
+                                       interactions = interactions,
+                                       generalism = generalism,
+                                       generalist.lambda = generalist.lambda,
+                                       specialist.lambda = specialist.lambda
 )
 
 
@@ -428,9 +428,9 @@ pollspeciestraits <- int_partners(species = pollspeciestraits,
                                   cols = species_cols)
 
 plantspeciestraits <- int_partners(species = plantspeciestraits,
-                                   interactions = interactions,
-                                   int_species = poll_species_number,
-                                   cols = species_cols)
+                                  interactions = interactions,
+                                  int_species = poll_species_number,
+                                  cols = species_cols)
 
 
 #### Function for generating array of individuals based on species traits ####
@@ -951,7 +951,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   pollinds[, active] <- 0
   plantinds[, active] <- 0
-  
+
   ## Recalculate phenological parameters if temperature has changed. Only midpoint sensitivity being used for first run
   
   if(annual.temp.change != 0){
@@ -969,7 +969,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   
   ## Calculate emergence date for individuals (and set hard limits)
-  
+   
   pollinds <- emergence.function(inds = pollinds)
   plantinds <- emergence.function(inds = plantinds)
   
@@ -999,7 +999,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
               q3 = quantile(emergence, 0.75),
               first = quantile(emergence, 0.05),
               last = quantile(emergence, 0.95)
-    )
+              )
   
   plantsummary <- bind_rows(plantsummary, currentplantsummary)
   
@@ -1013,7 +1013,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
               q3 = quantile(emergence, 0.75),
               first = quantile(emergence, 0.05),
               last = quantile(emergence, 0.95)
-    )
+              )
   
   pollsummary <- bind_rows(pollsummary, currentpollsummary)  
   
@@ -1031,7 +1031,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   pollspeciesinfo <- bind_rows(pollspeciesinfo, currentpollspeciesinfo)
   plantspeciesinfo <- bind_rows(plantspeciesinfo, currentplantspeciesinfo)
   
-  
+    
   # Reset timestep and condition
   
   timestep <- 0
@@ -1085,9 +1085,9 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
     timeloop <- endloop - startloop
   }
   
+ 
   
-  
-  #### Uptick season count, increase temperature #### 
+#### Uptick season count, increase temperature #### 
   
   season <- season + 1
   
@@ -1100,11 +1100,11 @@ pollspeciesinfo$run <- seed.reference
 plantspeciesinfo$run <- seed.reference
 
 
-write.csv(pollsummary,"pollsummary11.csv", row.names = FALSE)
-write.csv(plantsummary,"plantsummary11.csv", row.names = FALSE)
-write.csv(pollspeciesinfo, "pollspeciesinfo11.csv", row.names = FALSE)
-write.csv(plantspeciesinfo, "plantspeciesinfo11.csv", row.names = FALSE)
-write.csv(temp.summary, "tempsummary11.csv", row.names = FALSE)
+write.csv(pollsummary,"pollsummary1.csv", row.names = FALSE)
+write.csv(plantsummary,"plantsummary1.csv", row.names = FALSE)
+write.csv(pollspeciesinfo, "pollspeciesinfo1.csv", row.names = FALSE)
+write.csv(plantspeciesinfo, "plantspeciesinfo1.csv", row.names = FALSE)
+write.csv(temp.summary, "tempsummary1.csv", row.names = FALSE)
 
 
 

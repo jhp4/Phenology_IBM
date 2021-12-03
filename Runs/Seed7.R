@@ -14,7 +14,7 @@ set.seed(7)
 
 # Number of pollinator species to create 
 
-poll_species_number <- 20
+poll_species_number <- 30
 
 # Number of plant species to create 
 
@@ -59,7 +59,7 @@ min_skew <- 1
 
 poll_midpoint_sensitivity_mean <- -3.729871
 poll_midpoint_sensitivity_sd <- 6.856
-  
+
 plant_midpoint_sensitivity_mean <- -4
 plant_midpoint_sensitivity_sd <- 4
 
@@ -182,7 +182,7 @@ ymax <- 50
 
 poll_dispersal <- 4
 
- # Dispersal distance in cells for plant offspring from parent start location  
+# Dispersal distance in cells for plant offspring from parent start location  
 
 plant_dispersal <- 15
 
@@ -196,7 +196,7 @@ poll_hunger <- 12
 
 # Maximum number of pollinators that can feed from the same flower in one timestep
 
-pollfeeders <- 1
+pollfeeders <- 0
 
 # Number of offspring produced by pollinators once sexual maturity reached, used in pollinator reproduction function 
 
@@ -243,7 +243,7 @@ make_poll_species<- function(poll_species_number    ,
                              generalism_likelihood,
                              poll_lifespan
                              
-                          
+                             
 ){
   poll_species <- array(data=0, dim=c(poll_species_number,(species_cols + plant_species_number)));
   colnames(poll_species) <- pollspeciesnames;
@@ -268,25 +268,25 @@ make_poll_species<- function(poll_species_number    ,
 #### Create list of poll species and trait values using make_poll_species function (as part of start-up outside model run) ####
 
 pollspeciestraits <- make_poll_species( poll_species_number = poll_species_number    , 
-                   plant_species_number = plant_species_number   , 
-                   species_cols = species_cols ,
-                   pollspeciesnames = pollspeciesnames  ,
-                   max_midpoint = max_midpoint       , 
-                   min_midpoint = min_midpoint       ,
-                   max_scale = max_scale          ,
-                   min_scale = min_scale          ,
-                   max_efficacy = max_efficacy       ,
-                   min_efficacy = min_efficacy       ,
-                   min_skew = min_skew           ,
-                   max_skew = max_skew           ,
-                   poll_midpoint_sensitivity_mean = poll_midpoint_sensitivity_mean,
-                   poll_midpoint_sensitivity_sd = poll_midpoint_sensitivity_sd ,
-                   min_scale_sensitivity = min_scale_sensitivity    ,
-                   max_scale_sensitivity = max_scale_sensitivity    ,
-                   min_skew_sensitivity = min_skew_sensitivity    ,
-                   max_skew_sensitivity = max_skew_sensitivity    ,
-                   generalism_likelihood = generalism_likelihood,
-                   poll_lifespan = poll_lifespan)
+                                        plant_species_number = plant_species_number   , 
+                                        species_cols = species_cols ,
+                                        pollspeciesnames = pollspeciesnames  ,
+                                        max_midpoint = max_midpoint       , 
+                                        min_midpoint = min_midpoint       ,
+                                        max_scale = max_scale          ,
+                                        min_scale = min_scale          ,
+                                        max_efficacy = max_efficacy       ,
+                                        min_efficacy = min_efficacy       ,
+                                        min_skew = min_skew           ,
+                                        max_skew = max_skew           ,
+                                        poll_midpoint_sensitivity_mean = poll_midpoint_sensitivity_mean,
+                                        poll_midpoint_sensitivity_sd = poll_midpoint_sensitivity_sd ,
+                                        min_scale_sensitivity = min_scale_sensitivity    ,
+                                        max_scale_sensitivity = max_scale_sensitivity    ,
+                                        min_skew_sensitivity = min_skew_sensitivity    ,
+                                        max_skew_sensitivity = max_skew_sensitivity    ,
+                                        generalism_likelihood = generalism_likelihood,
+                                        poll_lifespan = poll_lifespan)
 
 ##### Plant species creation function ####
 
@@ -296,25 +296,25 @@ pollspeciestraits <- make_poll_species( poll_species_number = poll_species_numbe
 
 
 make_plant_species<- function(plant_species_number    , 
-                             poll_species_number   , 
-                             species_cols       ,
-                             plantspeciesnames   ,
-                             max_midpoint       , 
-                             min_midpoint       ,
-                             max_scale          ,
-                             min_scale          ,
-                             min_skew           ,
-                             max_skew           ,
-                             plant_midpoint_sensitivity_mean ,
-                             plant_midpoint_sensitivity_sd ,
-                             min_skew_sensitivity,
-                             max_skew_sensitivity,
-                             min_scale_sensitivity    ,
-                             max_scale_sensitivity    ,
-                             generalism_likelihood,
-                             plant_lifespan
-                             
-                             
+                              poll_species_number   , 
+                              species_cols       ,
+                              plantspeciesnames   ,
+                              max_midpoint       , 
+                              min_midpoint       ,
+                              max_scale          ,
+                              min_scale          ,
+                              min_skew           ,
+                              max_skew           ,
+                              plant_midpoint_sensitivity_mean ,
+                              plant_midpoint_sensitivity_sd ,
+                              min_skew_sensitivity,
+                              max_skew_sensitivity,
+                              min_scale_sensitivity    ,
+                              max_scale_sensitivity    ,
+                              generalism_likelihood,
+                              plant_lifespan
+                              
+                              
 ){
   plant_species <- array(data=0, dim=c(plant_species_number,(species_cols + poll_species_number)));
   colnames(plant_species) <- plantspeciesnames;
@@ -337,23 +337,23 @@ make_plant_species<- function(plant_species_number    ,
 #### Create list of plant species and trait values using make_plant_species function (as part of start-up outside model run) ####
 
 plantspeciestraits <- make_plant_species( poll_species_number = poll_species_number    , 
-                                        plant_species_number = plant_species_number   , 
-                                        species_cols = species_cols ,
-                                        plantspeciesnames = plantspeciesnames  ,
-                                        max_midpoint = max_midpoint       , 
-                                        min_midpoint = min_midpoint       ,
-                                        max_scale = max_scale          ,
-                                        min_scale = min_scale          ,
-                                        min_skew = min_skew           ,
-                                        max_skew = max_skew           ,
-                                        plant_midpoint_sensitivity_mean = plant_midpoint_sensitivity_mean,
-                                        plant_midpoint_sensitivity_sd = plant_midpoint_sensitivity_sd ,
-                                        min_scale_sensitivity = min_scale_sensitivity    ,
-                                        max_scale_sensitivity = max_scale_sensitivity    ,
-                                        min_skew_sensitivity = min_skew_sensitivity    ,
-                                        max_skew_sensitivity = max_skew_sensitivity    ,
-                                        generalism_likelihood = generalism_likelihood,
-                                        plant_lifespan = plant_lifespan)
+                                          plant_species_number = plant_species_number   , 
+                                          species_cols = species_cols ,
+                                          plantspeciesnames = plantspeciesnames  ,
+                                          max_midpoint = max_midpoint       , 
+                                          min_midpoint = min_midpoint       ,
+                                          max_scale = max_scale          ,
+                                          min_scale = min_scale          ,
+                                          min_skew = min_skew           ,
+                                          max_skew = max_skew           ,
+                                          plant_midpoint_sensitivity_mean = plant_midpoint_sensitivity_mean,
+                                          plant_midpoint_sensitivity_sd = plant_midpoint_sensitivity_sd ,
+                                          min_scale_sensitivity = min_scale_sensitivity    ,
+                                          max_scale_sensitivity = max_scale_sensitivity    ,
+                                          min_skew_sensitivity = min_skew_sensitivity    ,
+                                          max_skew_sensitivity = max_skew_sensitivity    ,
+                                          generalism_likelihood = generalism_likelihood,
+                                          plant_lifespan = plant_lifespan)
 
 
 
@@ -365,11 +365,11 @@ plantspeciestraits <- make_plant_species( poll_species_number = poll_species_num
 
 interaction_count <- function(species, interactions, generalism, generalist.lambda, specialist.lambda){
   for(i in 1:length(species[,1])){
-  if (species[i, generalism] == 1){
-    species[i, interactions] <- rpois(1, lambda = generalist.lambda)
-  }
+    if (species[i, generalism] == 1){
+      species[i, interactions] <- rpois(1, lambda = generalist.lambda)
+    }
     else{
-    species[i, interactions] <- rpois(1, lambda = specialist.lambda)
+      species[i, interactions] <- rpois(1, lambda = specialist.lambda)
     }
   }
   return(species)}
@@ -394,10 +394,10 @@ pollspeciestraits[,interactions][pollspeciestraits[,interactions]>plant_species_
 # Apply to plants
 
 plantspeciestraits <- interaction_count(species = plantspeciestraits,
-                                       interactions = interactions,
-                                       generalism = generalism,
-                                       generalist.lambda = generalist.lambda,
-                                       specialist.lambda = specialist.lambda
+                                        interactions = interactions,
+                                        generalism = generalism,
+                                        generalist.lambda = generalist.lambda,
+                                        specialist.lambda = specialist.lambda
 )
 
 
@@ -428,9 +428,9 @@ pollspeciestraits <- int_partners(species = pollspeciestraits,
                                   cols = species_cols)
 
 plantspeciestraits <- int_partners(species = plantspeciestraits,
-                                  interactions = interactions,
-                                  int_species = poll_species_number,
-                                  cols = species_cols)
+                                   interactions = interactions,
+                                   int_species = poll_species_number,
+                                   cols = species_cols)
 
 
 #### Function for generating array of individuals based on species traits ####
@@ -471,8 +471,8 @@ pollinds <- make_poll_individuals(species_number = poll_species_number,
                                   individuals = poll_individuals)
 
 plantinds <- make_plant_individuals(species_number = plant_species_number,
-                                  cols = inds_cols,
-                                  individuals = plant_individuals)
+                                    cols = inds_cols,
+                                    individuals = plant_individuals)
 
 # Merge individual trait arrays with species info (this turns it into a df)
 
@@ -488,9 +488,9 @@ plantinds <- merge(plantinds, plantspeciestraits, by = "speciesid")
 emergence.function <- function(inds){
   
   for (i in 1:dim(inds)[1]){
-  rand <- runif(1, 0, 1);
-   timestep <- inds[i, inds.midpoint] - (log(((1/rand) ^ inds[i, inds.skew]) - 1)/inds[i, inds.scale]);
-  inds[i, emergence] <- (round(timestep, digits=0))
+    rand <- runif(1, 0, 1);
+    timestep <- inds[i, inds.midpoint] - (log(((1/rand) ^ inds[i, inds.skew]) - 1)/inds[i, inds.scale]);
+    inds[i, emergence] <- (round(timestep, digits=0))
   }
   return(inds)
 }
@@ -630,8 +630,8 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
 # 5. If no, or if no flowers at x/y loc, then uptick hunger counter
 
 feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = speciesid, f.active = active, f.ncol = total_inds_cols){
- 
-   ## BD: Here's a trick to try to do this efficiency with minimual disruption
+  
+  ## BD: Here's a trick to try to do this efficiency with minimual disruption
   count_fed <- matrix(data = 0, nrow = ymax, ncol = xmax); 
   
   ## Insert this to scramble order in which loop processes pollinator inds (so that feeding preference isn't given to first lines of inds array)
@@ -642,6 +642,7 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
     yloc   <- poll[p, f.y_loc];
     flowers <- sum( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Total of flowers at that location
     if(poll[p, f.active] == 1 | poll[p, f.active] == 2){ # Check pollinator is f.active
+      poll[p, f.hunger] <- poll[p, f.hunger] +1;
       if(flowers > 0){ # Check there are flowers at that location 
         flowerinds <- which( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Get the flower individual at that location 
         f.speciesref <- plant[flowerinds, f.species] # Extract the f.species number of that flower 
@@ -654,15 +655,9 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
           ## hunger if it goes unfed? Also, you will want to replace the 10 hard
           ## coded with a variable that goes in the feeding function
           ## The variable will specify the maximum number of pollinating feeders
-          if(count_fed[xloc, yloc] <= -1){
-           poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
-        } else {
-          poll[p, f.hunger] <- poll[p, f.hunger] + 1 # If poll can't interact with flower then uptick f.hunger
-        }}}else {
-          poll[p, f.hunger] <- poll[p, f.hunger] + 1 # If flower not at location uptick f.hunger
-        }
-    } else {
-      poll[p, f.hunger] <- poll[p, f.hunger]  # If pollinator not f.active then leave f.hunger counter the same
+          if(count_fed[xloc, yloc] <= pollfeeders){
+            poll[p, f.hunger] <- 0 # If poll can interact with flower, f.hunger level resets to 0
+          }}}
     }}
   return(poll);
 }
@@ -819,6 +814,7 @@ pollreproduction <- function(poll, pr.active = active, pr.dead = dead, pr.hunger
 ## Offspring are currently identical to their parents. Could add variance to this but phenological traits and emergence will be adjusted and recalculated in new season anyway
 
 
+
 plantreproduction <- function(plant){
   
   # Check which individuals are active (state 1 or 2) and ready to reproduce (fully matured OR fully pollinated)
@@ -833,7 +829,7 @@ plantreproduction <- function(plant){
       parent <- reproducers[i];
       
       # Young calculated by taking lower of pollinated proportion or 1, multiplying it by seeds variable and rounding to nearest whole number 
-      plant[parent, inds.seedlings] <- pmax(1, (round((pmin(plant[parent, pollinated], 1) * plant_offspring), digits = 0))); 
+      plant[parent, inds.seedlings] <- round((pmin(plant[parent, pollinated], 1) * plant_offspring), digits = 0); 
       
       # Then mark parent/reproducer as dead
       plant[parent, dead] <- 1;
@@ -955,7 +951,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   pollinds[, active] <- 0
   plantinds[, active] <- 0
-
+  
   ## Recalculate phenological parameters if temperature has changed. Only midpoint sensitivity being used for first run
   
   if(annual.temp.change != 0){
@@ -973,7 +969,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   
   ## Calculate emergence date for individuals (and set hard limits)
-   
+  
   pollinds <- emergence.function(inds = pollinds)
   plantinds <- emergence.function(inds = plantinds)
   
@@ -1000,8 +996,10 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
               season = season,
               mean.emergence = mean(emergence),
               q1 = quantile(emergence, 0.25),
-              q3 = quantile(emergence, 0.75)
-              )
+              q3 = quantile(emergence, 0.75),
+              first = quantile(emergence, 0.05),
+              last = quantile(emergence, 0.95)
+    )
   
   plantsummary <- bind_rows(plantsummary, currentplantsummary)
   
@@ -1012,8 +1010,10 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
               season = season,
               mean.emergence = mean(emergence),
               q1 = quantile(emergence, 0.25),
-              q3 = quantile(emergence, 0.75)
-              )
+              q3 = quantile(emergence, 0.75),
+              first = quantile(emergence, 0.05),
+              last = quantile(emergence, 0.95)
+    )
   
   pollsummary <- bind_rows(pollsummary, currentpollsummary)  
   
@@ -1031,7 +1031,7 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   pollspeciesinfo <- bind_rows(pollspeciesinfo, currentpollspeciesinfo)
   plantspeciesinfo <- bind_rows(plantspeciesinfo, currentplantspeciesinfo)
   
-    
+  
   # Reset timestep and condition
   
   timestep <- 0
@@ -1085,9 +1085,9 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
     timeloop <- endloop - startloop
   }
   
- 
   
-#### Uptick season count, increase temperature #### 
+  
+  #### Uptick season count, increase temperature #### 
   
   season <- season + 1
   
@@ -1098,6 +1098,7 @@ pollsummary$run <- seed.reference
 plantsummary$run <- seed.reference
 pollspeciesinfo$run <- seed.reference
 plantspeciesinfo$run <- seed.reference
+
 
 
 write.csv(pollsummary,"pollsummary7.csv", row.names = FALSE)
