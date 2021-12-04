@@ -195,7 +195,7 @@ poll_hunger <- 12
 
 # Maximum number of pollinators that can feed from the same flower in one timestep
 
-pollfeeders <- 0
+pollfeeders <- 1
 
 # Number of offspring produced by pollinators once sexual maturity reached, used in pollinator reproduction function 
 
