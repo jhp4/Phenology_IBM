@@ -174,8 +174,8 @@ total_inds_cols <- species_cols + inds_cols -1
 
 # X and Y limits for landscape (currently set at 70*70 for a landscape of 4900 cells for starting population of 3,000)
 
-xmax <- 50
-ymax <- 50
+xmax <- 40
+ymax <- 40
 
 # Dispersal distance in cells for pollinator offspring from parent start location
 
