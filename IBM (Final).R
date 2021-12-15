@@ -8,14 +8,14 @@ library("tidyverse")
 
 ## Below terms are used in table production and file names/writing. Seed.reference should match the set.seed, run.type is 'control' if no phenological shifts turned on, otherwise all parameter names that are shifting (activated lines 970 -985)
 
-seed.reference <- 4
-run.type <- "control"
+seed.reference <- 20
+run.type <- "mid"
 filetype <- ".csv"
 
 
 # Set run seed
 
-set.seed(4)
+set.seed(20)
 
 #### Set global parameters (as part of start-up outside model run) ####
 
@@ -938,7 +938,7 @@ pollspeciesinfo <- pollinds %>%
   distinct(speciesid, .keep_all = TRUE) %>% 
   mutate(season = -1)
 
-temp.summary <- array(data=0, dim = c(50,4))
+temp.summary <- array(data=0, dim = c(70,4))
 temp.summary[, 4] <- seed.reference
 
 
@@ -956,10 +956,10 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   if(season >20){
     annual.temp.change <- rnorm(1, mean= mean.annual.increase, sd = sd.annual.increase);
-    temp.summary[(season-15), 1] <- season;
-    temp.summary[(season-15), 2] <- annual.temp.change;
+    temp.summary[(season-20), 1] <- season;
+    temp.summary[(season-20), 2] <- annual.temp.change;
     annual.temp <- annual.temp + annual.temp.change;
-    temp.summary[(season-15), 3] <- annual.temp
+    temp.summary[(season-20), 3] <- annual.temp
     
   }
   
@@ -970,18 +970,18 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   ## Recalculate phenological parameters if temperature has changed. Only midpoint sensitivity being used for first run
   
-  #if(annual.temp.change != 0){
-    #pollinds$midpoint <- pollinds$midpoint + (annual.temp.change * pollinds$midpoint.sensitivity)
+  if(annual.temp.change != 0){
+    pollinds$midpoint <- pollinds$midpoint + (annual.temp.change * pollinds$midpoint.sensitivity)
     #pollinds$scale <- pollinds$scale + (annual.temp.change * pollinds$scale.sensitivity)
     #pollinds$scale[pollinds$scale < 0.1] <- 0.1
     #pollinds$skew <- pollinds$skew + (annual.temp.change * pollinds$skew.sensitivity)
     #pollinds$skew[pollinds$skew < 1] <- 1
-    #plantinds$midpoint <- plantinds$midpoint + (annual.temp.change * plantinds$midpoint.sensitivity)
+    plantinds$midpoint <- plantinds$midpoint + (annual.temp.change * plantinds$midpoint.sensitivity)
     #plantinds$scale <- plantinds$scale + (annual.temp.change * plantinds$scale.sensitivity)
     #plantinds$scale[plantinds$scale < 0.1] <- 0.1
     #plantinds$skew <- plantinds$skew + (annual.temp.change * plantinds$skew.sensitivity)
     #plantinds$skew[plantinds$skew < 1] <- 1
-  #}
+  }
   
   
   ## Calculate emergence date for individuals (and set hard limits)
