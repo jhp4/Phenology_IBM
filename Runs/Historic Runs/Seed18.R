@@ -1094,10 +1094,10 @@ while(season < 21){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
 }
 
 
-pollsummary$run <- seed.reference
-plantsummary$run <- seed.reference
-pollspeciesinfo$run <- seed.reference
-plantspeciesinfo$run <- seed.reference
+pollsummary$run <- seed.reference; pollsummary$type <- run.type
+plantsummary$run <- seed.reference; plantsummary$type <- run.type
+pollspeciesinfo$run <- seed.reference; pollspeciesinfo$type <- run.type
+plantspeciesinfo$run <- seed.reference; plantspeciesinfo$type <- run.type
 
 write.csv(pollsummary,"pollsummary18.csv", row.names = FALSE)
 write.csv(plantsummary,"plantsummary18.csv", row.names = FALSE)
