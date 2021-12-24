@@ -15,7 +15,7 @@ filetype <- ".csv"
 
 # Set run seed
 
-set.seed(19)
+set.seed(9)
 
 #### Set global parameters (as part of start-up outside model run) ####
 
@@ -938,7 +938,7 @@ pollspeciesinfo <- pollinds %>%
   distinct(speciesid, .keep_all = TRUE) %>% 
   mutate(season = -1)
 
-temp.summary <- array(data=0, dim = c(50,4))
+temp.summary <- array(data=0, dim = c(70,4))
 temp.summary[, 4] <- seed.reference
 
 
@@ -956,10 +956,10 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   if(season >20){
     annual.temp.change <- rnorm(1, mean= mean.annual.increase, sd = sd.annual.increase);
-    temp.summary[(season-15), 1] <- season;
-    temp.summary[(season-15), 2] <- annual.temp.change;
+    temp.summary[(season-20), 1] <- season;
+    temp.summary[(season-20), 2] <- annual.temp.change;
     annual.temp <- annual.temp + annual.temp.change;
-    temp.summary[(season-15), 3] <- annual.temp
+    temp.summary[(season-20), 3] <- annual.temp
     
   }
   
@@ -1114,15 +1114,15 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
 }
 
 
-pollsummary$run <- seed.reference
-plantsummary$run <- seed.reference
-pollspeciesinfo$run <- seed.reference
-plantspeciesinfo$run <- seed.reference
+pollsummary$run <- seed.reference; pollsummary$type <- run.type
+plantsummary$run <- seed.reference; plantsummary$type <- run.type
+pollspeciesinfo$run <- seed.reference; pollspeciesinfo$type <- run.type
+plantspeciesinfo$run <- seed.reference; plantspeciesinfo$type <- run.type
 colnames(temp.summary) <- c("season", "change", "temperature", "seed")
 
 
 pollsummaryname <- paste("pollsummary", seed.reference, run.type, filetype, sep="")
-plantsummaryname <- paste("pollsummary", seed.reference, run.type, filetype, sep="")
+plantsummaryname <- paste("plantsummary", seed.reference, run.type, filetype, sep="")
 pollspeciesname <- paste("pollspeciesinfo", seed.reference, run.type, filetype, sep="")
 plantspeciesname <- paste("plantspeciesinfo", seed.reference, run.type, filetype, sep="")
 tempname <- paste("tempsummary", seed.reference, run.type, filetype, sep="")

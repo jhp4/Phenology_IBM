@@ -1122,7 +1122,7 @@ colnames(temp.summary) <- c("season", "change", "temperature", "seed")
 
 
 pollsummaryname <- paste("pollsummary", seed.reference, run.type, filetype, sep="")
-plantsummaryname <- paste("pollsummary", seed.reference, run.type, filetype, sep="")
+plantsummaryname <- paste("plantsummary", seed.reference, run.type, filetype, sep="")
 pollspeciesname <- paste("pollspeciesinfo", seed.reference, run.type, filetype, sep="")
 plantspeciesname <- paste("plantspeciesinfo", seed.reference, run.type, filetype, sep="")
 tempname <- paste("tempsummary", seed.reference, run.type, filetype, sep="")
