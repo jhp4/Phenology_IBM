@@ -8,20 +8,20 @@ library("tidyverse")
 
 ## Below terms are used in table production and file names/writing. Seed.reference should match the set.seed, run.type is 'control' if no phenological shifts turned on, otherwise all parameter names that are shifting (activated lines 970 -985)
 
-seed.reference <- 20
-run.type <- "mid"
+seed.reference <- 1
+run.type <- "control"
 filetype <- ".csv"
 
 
 # Set run seed
 
-set.seed(20)
+set.seed(4)
 
 #### Set global parameters (as part of start-up outside model run) ####
 
 # Number of pollinator species to create 
 
-poll_species_number <- 30
+poll_species_number <- 40
 
 # Number of plant species to create 
 
@@ -220,6 +220,32 @@ plant_offspring <- 6
 mean.annual.increase <- 0.078
 sd.annual.increase <- 0.9164
 
+## Generate array of annual temperature changes using climate variables. This is done up front
+# rather than within seasonal loop so that seed number fixes temperature variance for that seed
+
+# Create temperature array 
+temparray <- array(data=0, dim=c(100, 4));
+colnames(temparray) <- c("Prediction", "Actual", "Difference", "Seed")
+
+# Generate predicted annual/seasonal temperature increase
+temparray[,1] <- mean.annual.increase * seq(1:nrow(temparray))
+
+# Add stochasticity to prediction for actual increase 
+temparray[,2] <- rnorm(nrow(temparray), mean = as.numeric(temparray[,1]), sd = sd.annual.increase)
+
+# Calculate difference between current season temp and prior (for recalculation of phenology parameters)
+
+temparray[1,3] <- temparray[1,2]
+
+for(r in 2:nrow(temparray)){
+  current <- as.numeric(temparray[r,2]);
+  previous <- as.numeric(temparray[(r-1), 2]);
+  temparray[r, 3] <- current - previous
+}
+
+# Add seed reference
+
+temparray[,4] <- seed.reference
 
 
 #### Pollinator species creation function ####
@@ -638,7 +664,7 @@ movement <- function(inds, m.active = active, m.x_loc = x_loc, m.y_loc = y_loc, 
 
 feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hunger,  f.species = speciesid, f.active = active, f.ncol = total_inds_cols){
   
-  ## BD: Here's a trick to try to do this efficiency with minimual disruption
+  ## BD: Here's a trick to try to do this efficiency with minimal disruption
   count_fed <- matrix(data = 0, nrow = ymax, ncol = xmax); 
   
   ## Insert this to scramble order in which loop processes pollinator inds (so that feeding preference isn't given to first lines of inds array)
@@ -647,11 +673,11 @@ feeding <- function(poll, plant, f.x_loc = x_loc, f.y_loc = y_loc, f.hunger = hu
   for(p in scrambled_polls){      
     xloc   <- poll[p, f.x_loc]; # Get poll locations
     yloc   <- poll[p, f.y_loc];
-    flowers <- sum( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Total of flowers at that location
-    if(poll[p, f.active] == 1 | poll[p, f.active] == 2){ # Check pollinator is f.active
+    flowers <- sum( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc & (plant[, active] == 1 | plant[, active] == 2)); # Total of flowers at that location
+    if(poll[p, f.active] == 1 | poll[p, f.active] == 2){ # Check pollinator is active
       poll[p, f.hunger] <- poll[p, f.hunger] +1;
       if(flowers > 0){ # Check there are flowers at that location 
-        flowerinds <- which( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc); # Get the flower individual at that location 
+        flowerinds <- which( plant[, f.x_loc] == xloc & plant[, f.y_loc] == yloc & (plant[, active] == 1 | plant[, active] == 2)); # Get the flower individual at that location 
         f.speciesref <- plant[flowerinds, f.species] # Extract the f.species number of that flower 
         if(poll[p, (f.ncol+f.speciesref)[1]] == 1){ # Check that this flower f.species is one which pollinator interacts with  
           
@@ -682,10 +708,10 @@ p.pollination <- function(plant, poll, p.x_loc = x_loc, p.y_loc = y_loc, p.effic
   for(p in 1:length(plant[,1])){      
     xloc   <- plant[p, p.x_loc]; # Get plant locations
     yloc   <- plant[p, p.y_loc];
-    polls <- sum( poll[, p.x_loc] == xloc & poll[, p.y_loc] == yloc); # Total of pollinators at that location
+    polls <- sum( poll[, p.x_loc] == xloc & poll[, p.y_loc] == yloc & (poll[, active] == 1 | poll[, active] == 2)); # Total of pollinators at that location
     if(plant[p, p.active] == 1 | plant[p, p.active] == 2){ # Check flower is p.active
       if(polls > 0){ # Check there are pollinators at that location 
-        pollinds <- which(poll[, p.x_loc] == xloc & poll[, p.y_loc] == yloc); # Get the pollinator individual(s) at that location 
+        pollinds <- which(poll[, p.x_loc] == xloc & poll[, p.y_loc] == yloc & (poll[, active] == 1 | poll[, active] == 2)); # Get the pollinator individual(s) at that location 
         for(i in pollinds){
           eff <- poll[i, p.efficacy]; # Pull p.efficacy values for those pollinators
           sp <- poll[i, p.species]; # Pull p.species numbers for those pollinators 
@@ -938,9 +964,7 @@ pollspeciesinfo <- pollinds %>%
   distinct(speciesid, .keep_all = TRUE) %>% 
   mutate(season = -1)
 
-temp.summary <- array(data=0, dim = c(70,4))
-temp.summary[, 4] <- seed.reference
-
+temp.summary <- temparray
 
 #### Run IBM loop #### 
 
@@ -950,16 +974,13 @@ annual.temp.change <- 0
 start_time <- Sys.time()
 
 
-while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50 to apply phenology shifts) 
+while(season < 5){ # Run for an initial 71 seasons (20 to burn in/stabilise, 50 to apply phenology shifts) 
   
-  ## Generate annual temperature change and track temperature data 
+  ## Pull temperature change from temparray once season exceeds burn in period of 20 
   
   if(season >20){
-    annual.temp.change <- rnorm(1, mean= mean.annual.increase, sd = sd.annual.increase);
-    temp.summary[(season-20), 1] <- season;
-    temp.summary[(season-20), 2] <- annual.temp.change;
-    annual.temp <- annual.temp + annual.temp.change;
-    temp.summary[(season-20), 3] <- annual.temp
+    seasonref <- season-20
+    annual.temp.change <- temparray[seasonref, 3]
     
   }
   
@@ -970,18 +991,18 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   
   ## Recalculate phenological parameters if temperature has changed. Only midpoint sensitivity being used for first run
   
-  if(annual.temp.change != 0){
-    pollinds$midpoint <- pollinds$midpoint + (annual.temp.change * pollinds$midpoint.sensitivity)
+  #if(annual.temp.change != 0){
+    #pollinds$midpoint <- pollinds$midpoint + (annual.temp.change * pollinds$midpoint.sensitivity)
     #pollinds$scale <- pollinds$scale + (annual.temp.change * pollinds$scale.sensitivity)
     #pollinds$scale[pollinds$scale < 0.1] <- 0.1
     #pollinds$skew <- pollinds$skew + (annual.temp.change * pollinds$skew.sensitivity)
     #pollinds$skew[pollinds$skew < 1] <- 1
-    plantinds$midpoint <- plantinds$midpoint + (annual.temp.change * plantinds$midpoint.sensitivity)
+    #plantinds$midpoint <- plantinds$midpoint + (annual.temp.change * plantinds$midpoint.sensitivity)
     #plantinds$scale <- plantinds$scale + (annual.temp.change * plantinds$scale.sensitivity)
     #plantinds$scale[plantinds$scale < 0.1] <- 0.1
     #plantinds$skew <- plantinds$skew + (annual.temp.change * plantinds$skew.sensitivity)
     #plantinds$skew[plantinds$skew < 1] <- 1
-  }
+  #}
   
   
   ## Calculate emergence date for individuals (and set hard limits)
@@ -990,9 +1011,9 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
   plantinds <- emergence.function(inds = plantinds)
   
   pollinds$emergence[pollinds$emergence < 1] <- 1
-  pollinds$emergence[pollinds$emergence > 330] <- 330
+  pollinds$emergence[pollinds$emergence > 330] <- 320
   plantinds$emergence[plantinds$emergence < 1] <- 1
-  plantinds$emergence[plantinds$emergence > 330] <- 330
+  plantinds$emergence[plantinds$emergence > 330] <- 320
   
   
   ## Place individuals
@@ -1114,11 +1135,11 @@ while(season < 71){ # Run for an initial 65 seasons (15 to burn in/stabilise, 50
 }
 
 
-pollsummary$run <- seed.reference
-plantsummary$run <- seed.reference
-pollspeciesinfo$run <- seed.reference
-plantspeciesinfo$run <- seed.reference
-colnames(temp.summary) <- c("season", "change", "temperature", "seed")
+
+pollsummary$run <- seed.reference; pollsummary$type <- run.type
+plantsummary$run <- seed.reference; plantsummary$type <- run.type
+pollspeciesinfo$run <- seed.reference; pollspeciesinfo$type <- run.type
+plantspeciesinfo$run <- seed.reference; plantspeciesinfo$type <- run.type
 
 
 pollsummaryname <- paste("pollsummary", seed.reference, run.type, filetype, sep="")
